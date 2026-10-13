@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Create Your Account | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <div class="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
+        <a href="https://clmits.com" class="mb-8 inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-ink">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+            Back to clmits.com
+        </a>
+
+        <div class="rounded-2xl border border-line bg-white p-8 shadow-[0_8px_0_rgba(0,0,0,0.08)]">
+            <span class="rounded-md bg-ink px-3 py-1 text-[11px] font-black text-white">Free Account</span>
+            <h1 class="mt-5 text-3xl font-black tracking-tight">Create your account</h1>
+            <p class="mt-2 text-sm leading-6 text-gray-600">Unlocks every module of the Data Engineering Masterclass, free.</p>
+
+            <form id="signupForm" class="mt-8 space-y-5">
+                <div>
+                    <label for="email" class="mb-2 block text-sm font-black">Email Address</label>
+                    <input type="email" id="email" name="email" autocomplete="email" required class="block w-full rounded-xl border border-gray-300 bg-paper px-4 py-3 text-sm outline-none transition focus:border-ink focus:bg-white focus:ring-4 focus:ring-black/5" placeholder="you@email.com">
+                </div>
+                <div>
+                    <label for="password" class="mb-2 block text-sm font-black">Password</label>
+                    <input type="password" id="password" name="password" autocomplete="new-password" required minlength="8" class="block w-full rounded-xl border border-gray-300 bg-paper px-4 py-3 text-sm outline-none transition focus:border-ink focus:bg-white focus:ring-4 focus:ring-black/5" placeholder="At least 8 characters">
+                </div>
+
+                <p id="formError" class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"></p>
+
+                <button type="submit" id="submitBtn" class="w-full rounded-xl bg-ink px-6 py-3.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-black/10">
+                    Create Account
+                </button>
+            </form>
+
+            <p class="mt-6 text-center text-sm text-gray-600">
+                Already have an account? <a href="login.html" class="font-black text-ink hover:text-signal">Sign in</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/portal.js"></script>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('formError');
+            const submitBtn = document.getElementById('submitBtn');
+            errorEl.classList.add('hidden');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating account...';
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            const { ok, data } = await apiFetch('auth-signup', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+
+            if (!ok) {
+                errorEl.textContent = (data && data.error) || 'Something went wrong. Try again.';
+                errorEl.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+                return;
+            }
+
+            window.location.href = 'dashboard.html';
+        });
+    </script>
+</body>
+</html>

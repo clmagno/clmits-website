@@ -13,6 +13,9 @@ exports.handler = async (event) => {
 
     const sql = getDb();
 
+    const [me] = await sql`select subscription_until from users where id = ${sessionUser.id}`;
+    const active = Boolean(me && me.subscription_until && new Date(me.subscription_until) > new Date());
+
     const courses = await sql`
         select
             c.slug,
@@ -20,11 +23,10 @@ exports.handler = async (event) => {
             c.description,
             count(m.id)::int as total_modules,
             count(mp.module_id)::int as completed_modules
-        from enrollments e
-        join courses c on c.id = e.course_id
+        from courses c
         left join modules m on m.course_id = c.id
-        left join module_progress mp on mp.module_id = m.id and mp.user_id = e.user_id
-        where e.user_id = ${sessionUser.id}
+        left join module_progress mp on mp.module_id = m.id and mp.user_id = ${sessionUser.id}
+        where c.requires_subscription = true
         group by c.slug, c.title, c.description
         order by c.title
     `;
@@ -33,15 +35,17 @@ exports.handler = async (event) => {
         select c.slug, c.title, c.description, c.inquiry_interest
         from courses c
         where c.is_catalog_only = true
-        and not exists (
-            select 1 from enrollments e where e.user_id = ${sessionUser.id} and e.course_id = c.id
-        )
         order by c.title
     `;
 
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: sessionUser.email, courses, offerings })
+        body: JSON.stringify({
+            email: sessionUser.email,
+            subscription: { active, until: me ? me.subscription_until : null },
+            courses,
+            offerings
+        })
     };
 };

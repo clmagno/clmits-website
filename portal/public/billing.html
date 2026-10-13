@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Subscribe | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
+            <a href="dashboard.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Your Courses
+            </a>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-md px-5 py-16">
+        <div class="rounded-2xl border border-line bg-white p-8 shadow-[0_8px_0_rgba(0,0,0,0.08)]">
+            <span class="rounded-md bg-ink px-3 py-1 text-[11px] font-black text-white">Monthly Access</span>
+            <h1 class="mt-5 text-3xl font-black tracking-tight">&#8369;499<span class="text-base font-bold text-gray-500">/month</span></h1>
+            <p class="mt-2 text-sm leading-6 text-gray-600">Unlocks every self-paced module, reading, and quiz. Pay by GCash, Maya, or card.</p>
+
+            <ul class="mt-6 space-y-2 text-sm text-gray-700">
+                <li class="flex gap-2"><span class="text-signal">&check;</span> All 18 Data Engineering Masterclass modules</li>
+                <li class="flex gap-2"><span class="text-signal">&check;</span> Companion readings for each module</li>
+                <li class="flex gap-2"><span class="text-signal">&check;</span> Knowledge-check quizzes</li>
+                <li class="flex gap-2"><span class="text-signal">&check;</span> 30 days of access per payment &mdash; renew anytime</li>
+            </ul>
+
+            <p id="formError" class="mt-6 hidden rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"></p>
+
+            <button type="button" id="subscribeBtn" class="mt-6 w-full rounded-xl bg-ink px-6 py-3.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-black/10">
+                Continue to Payment
+            </button>
+            <p class="mt-4 text-center text-xs text-gray-500">You'll be redirected to PayMongo's secure checkout.</p>
+        </div>
+    </main>
+
+    <script src="js/portal.js"></script>
+    <script>
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+
+            document.getElementById('subscribeBtn').addEventListener('click', async () => {
+                const btn = document.getElementById('subscribeBtn');
+                const errorEl = document.getElementById('formError');
+                errorEl.classList.add('hidden');
+                btn.disabled = true;
+                btn.textContent = 'Starting checkout...';
+
+                const { ok, data } = await apiFetch('create-checkout', { method: 'POST' });
+                if (!ok || !data || !data.checkoutUrl) {
+                    errorEl.textContent = (data && data.error) || 'Could not start checkout. Try again.';
+                    errorEl.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.textContent = 'Continue to Payment';
+                    return;
+                }
+                window.location.href = data.checkoutUrl;
+            });
+        })();
+    </script>
+</body>
+</html>

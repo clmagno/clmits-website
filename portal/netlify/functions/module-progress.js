@@ -28,20 +28,23 @@ exports.handler = async (event) => {
 
     const sql = getDb();
 
-    // Only let a learner mark progress on a module they're actually enrolled in
-    // (or that's open as a free preview) — this is the same gate course-content.js uses.
+    // Only let a learner mark progress on a module they've actually unlocked
+    // (free preview, or an active subscription) — same gate course-content.js uses.
     const [module] = await sql`
-        select m.id, m.is_free_preview,
-            exists (
-                select 1 from enrollments e
-                where e.user_id = ${sessionUser.id} and e.course_id = m.course_id
-            ) as enrolled
+        select m.id, m.is_free_preview, c.requires_subscription
         from modules m
         join courses c on c.id = m.course_id
         where c.slug = ${slug} and m.position = ${position}
     `;
 
-    if (!module || (!module.is_free_preview && !module.enrolled)) {
+    let hasSubscription = false;
+    if (module && module.requires_subscription) {
+        const [me] = await sql`select subscription_until from users where id = ${sessionUser.id}`;
+        hasSubscription = Boolean(me && me.subscription_until && new Date(me.subscription_until) > new Date());
+    }
+    const unlocked = module && (module.is_free_preview || (module.requires_subscription ? hasSubscription : true));
+
+    if (!unlocked) {
         return { statusCode: 403, body: JSON.stringify({ error: 'Not unlocked.' }) };
     }
 

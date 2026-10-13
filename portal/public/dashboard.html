@@ -28,7 +28,9 @@
 
     <main class="mx-auto max-w-5xl px-5 py-12">
         <h1 class="text-3xl font-black tracking-tight">Your Courses</h1>
-        <p class="mt-2 text-sm text-gray-600">Track your progress through everything unlocked on your free account.</p>
+        <p class="mt-2 text-sm text-gray-600">Module 1 of every course is free. A subscription unlocks the rest, plus readings and quizzes.</p>
+
+        <div id="subscriptionBanner" class="mt-6 rounded-xl border p-6"></div>
 
         <div id="courseList" class="mt-8 grid gap-4 sm:grid-cols-2"></div>
 
@@ -75,16 +77,39 @@
                 </a>`;
         }
 
+        function renderSubscriptionBanner(sub) {
+            const banner = document.getElementById('subscriptionBanner');
+            if (sub && sub.active) {
+                const until = new Date(sub.until).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                banner.className = 'mt-6 rounded-xl border border-green-200 bg-green-50 p-6 sm:flex sm:items-center sm:justify-between sm:gap-6';
+                banner.innerHTML = `
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wide text-green-700">Subscription Active</p>
+                        <p class="mt-1 text-sm text-gray-700">Renews/expires ${until}.</p>
+                    </div>
+                    <a href="billing.html" class="mt-4 inline-flex shrink-0 items-center justify-center rounded-lg border border-line bg-white px-5 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5 sm:mt-0">Manage Billing</a>`;
+            } else {
+                banner.className = 'mt-6 rounded-xl border border-line bg-white p-6 sm:flex sm:items-center sm:justify-between sm:gap-6';
+                banner.innerHTML = `
+                    <div>
+                        <p class="text-xs font-black uppercase tracking-wide text-gray-500">No Active Subscription</p>
+                        <p class="mt-1 text-sm text-gray-700">Subscribe to unlock every module, reading, and quiz.</p>
+                    </div>
+                    <a href="billing.html" class="mt-4 inline-flex shrink-0 items-center justify-center rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 sm:mt-0">Subscribe</a>`;
+            }
+        }
+
         (async () => {
             const session = await requireAuth();
             if (!session) return;
 
             document.getElementById('userEmail').textContent = session.email;
             document.getElementById('logoutBtn').addEventListener('click', logout);
+            renderSubscriptionBanner(session.subscription);
 
             const list = document.getElementById('courseList');
             if (!session.courses.length) {
-                list.innerHTML = '<p class="text-sm text-gray-600">No courses enrolled yet.</p>';
+                list.innerHTML = '<p class="text-sm text-gray-600">No courses available yet.</p>';
             } else {
                 list.innerHTML = session.courses.map(renderCourseCard).join('');
             }

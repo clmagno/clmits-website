@@ -27,10 +27,14 @@ exports.handler = async (event) => {
     }
 
     const modules = await sql`
-        select position, title, description, video_url, is_free_preview
-        from modules
-        where course_id = ${course.id}
-        order by position
+        select m.position, m.title, m.description, m.video_url, m.is_free_preview,
+            exists (
+                select 1 from module_progress mp
+                where mp.module_id = m.id and mp.user_id = ${sessionUser ? sessionUser.id : null}
+            ) as completed
+        from modules m
+        where m.course_id = ${course.id}
+        order by m.position
     `;
 
     const payload = modules.map((m) => {
@@ -40,6 +44,7 @@ exports.handler = async (event) => {
             title: m.title,
             description: m.description,
             locked: !unlocked,
+            completed: unlocked && m.completed,
             // Never send a video_url for a module the caller hasn't unlocked.
             video_url: unlocked ? m.video_url : null
         };

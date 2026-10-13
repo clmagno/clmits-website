@@ -28,13 +28,53 @@
 
     <main class="mx-auto max-w-5xl px-5 py-12">
         <h1 class="text-3xl font-black tracking-tight">Your Courses</h1>
-        <p class="mt-2 text-sm text-gray-600">Everything below is unlocked on your free account.</p>
+        <p class="mt-2 text-sm text-gray-600">Track your progress through everything unlocked on your free account.</p>
 
         <div id="courseList" class="mt-8 grid gap-4 sm:grid-cols-2"></div>
+
+        <div id="offeringsSection" class="mt-16 hidden">
+            <h2 class="text-2xl font-black tracking-tight">Course Offerings</h2>
+            <p class="mt-2 text-sm text-gray-600">Live, instructor-led bootcamps you can reserve a slot in.</p>
+            <div id="offeringsList" class="mt-6 grid gap-4 sm:grid-cols-2"></div>
+        </div>
     </main>
 
     <script src="js/portal.js"></script>
     <script>
+        function statusLabel(course) {
+            if (course.total_modules === 0) return { text: 'No modules yet', color: 'text-gray-500' };
+            if (course.completed_modules === 0) return { text: 'Not Started', color: 'text-gray-500' };
+            if (course.completed_modules >= course.total_modules) return { text: 'Completed', color: 'text-green-600' };
+            return { text: 'In Progress', color: 'text-signal' };
+        }
+
+        function renderCourseCard(c) {
+            const pct = c.total_modules ? Math.round((c.completed_modules / c.total_modules) * 100) : 0;
+            const status = statusLabel(c);
+            return `
+                <a href="course.html?slug=${encodeURIComponent(c.slug)}" class="block rounded-xl border border-line bg-white p-6 shadow-[0_5px_0_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-xl font-black tracking-tight">${c.title}</h2>
+                        <span class="shrink-0 text-xs font-black uppercase tracking-wide ${status.color}">${status.text}</span>
+                    </div>
+                    <div class="mt-4 h-2 rounded-full bg-gray-100">
+                        <div class="h-2 rounded-full bg-ink" style="width: ${pct}%"></div>
+                    </div>
+                    <p class="mt-2 text-xs font-bold text-gray-500">${c.completed_modules} / ${c.total_modules} modules complete</p>
+                </a>`;
+        }
+
+        function renderOfferingCard(o) {
+            const href = `https://clmits.com/index.html?interest=${encodeURIComponent(o.inquiry_interest || '')}#contact`;
+            return `
+                <a href="${href}" class="block rounded-xl border border-line bg-white p-6 shadow-[0_5px_0_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5">
+                    <span class="rounded-md bg-ink px-3 py-1 text-[11px] font-black text-white">Live Bootcamp</span>
+                    <h2 class="mt-4 text-xl font-black tracking-tight">${o.title}</h2>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">${o.description}</p>
+                    <p class="mt-4 text-sm font-black text-signal">Reserve your slot &rarr;</p>
+                </a>`;
+        }
+
         (async () => {
             const session = await requireAuth();
             if (!session) return;
@@ -45,15 +85,14 @@
             const list = document.getElementById('courseList');
             if (!session.courses.length) {
                 list.innerHTML = '<p class="text-sm text-gray-600">No courses enrolled yet.</p>';
-                return;
+            } else {
+                list.innerHTML = session.courses.map(renderCourseCard).join('');
             }
 
-            list.innerHTML = session.courses.map((c) => `
-                <a href="course.html?slug=${encodeURIComponent(c.slug)}" class="block rounded-xl border border-line bg-white p-6 shadow-[0_5px_0_rgba(0,0,0,0.08)] transition hover:-translate-y-0.5">
-                    <h2 class="text-xl font-black tracking-tight">${c.title}</h2>
-                    <p class="mt-2 text-sm font-bold text-signal">Continue learning &rarr;</p>
-                </a>
-            `).join('');
+            if (session.offerings && session.offerings.length) {
+                document.getElementById('offeringsSection').classList.remove('hidden');
+                document.getElementById('offeringsList').innerHTML = session.offerings.map(renderOfferingCard).join('');
+            }
         })();
     </script>
 </body>

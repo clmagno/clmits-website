@@ -44,9 +44,12 @@
                             allowfullscreen></iframe>
                     </div>
 
-                    <div id="activeModuleCard" class="rounded-xl border border-line bg-ink p-6 text-white shadow-[0_5px_0_rgba(0,0,0,0.18)]">
-                        <h3 id="activeModuleTitle" class="text-2xl font-black tracking-tight"></h3>
-                        <p class="mt-1 text-sm text-white/70">Self-Paced Recording</p>
+                    <div id="activeModuleCard" class="rounded-xl border border-line bg-ink p-6 text-white shadow-[0_5px_0_rgba(0,0,0,0.18)] sm:flex sm:items-center sm:justify-between sm:gap-6">
+                        <div>
+                            <h3 id="activeModuleTitle" class="text-2xl font-black tracking-tight"></h3>
+                            <p class="mt-1 text-sm text-white/70">Self-Paced Recording</p>
+                        </div>
+                        <button type="button" id="completeBtn" class="mt-5 inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5 sm:mt-0"></button>
                     </div>
                 </div>
 
@@ -65,6 +68,7 @@
     <script>
         const lockIcon = '<svg class="h-4 w-4 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>';
         const playIcon = '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>';
+        const checkIcon = '<svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" /></svg>';
 
         function renderModuleRow(m, isActive) {
             if (m.locked) {
@@ -78,13 +82,16 @@
                     </div>`;
             }
             const base = isActive ? 'bg-ink text-white' : 'hover:bg-white';
+            const badge = m.completed
+                ? `<div class="grid h-8 w-8 place-items-center rounded-full ${isActive ? 'bg-white text-green-600' : 'bg-green-600 text-white'}">${checkIcon}</div>`
+                : `<div class="grid h-8 w-8 place-items-center rounded-full border ${isActive ? 'border-white/20 bg-white text-ink' : 'border-ink/10 bg-ink text-white'}">${playIcon}</div>`;
             return `
                 <button type="button" data-position="${m.position}" class="module-row flex w-full items-center justify-between rounded-lg p-4 text-left transition ${base}">
                     <div class="flex items-center gap-3">
-                        <div class="grid h-8 w-8 place-items-center rounded-full border ${isActive ? 'border-white/20 bg-white text-ink' : 'border-ink/10 bg-ink text-white'}">${playIcon}</div>
+                        ${badge}
                         <div>
                             <p class="text-sm font-black">${m.position}. ${m.title}</p>
-                            <p class="text-xs ${isActive ? 'text-white/70' : 'text-gray-500'}">${m.video_url ? 'Available' : 'Coming soon'}</p>
+                            <p class="text-xs ${isActive ? 'text-white/70' : 'text-gray-500'}">${m.completed ? 'Completed' : (m.video_url ? 'Available' : 'Coming soon')}</p>
                         </div>
                     </div>
                 </button>`;
@@ -117,12 +124,14 @@
 
             function renderPlayer() {
                 const player = document.getElementById('player');
+                const completeBtn = document.getElementById('completeBtn');
                 if (active && active.video_url) {
                     player.src = active.video_url;
                     player.title = active.title;
                     document.getElementById('playerWrap').classList.remove('hidden');
                     document.getElementById('activeModuleTitle').textContent = `Module ${active.position}: ${active.title}`;
                     document.getElementById('activeModuleCard').classList.remove('hidden');
+                    completeBtn.textContent = active.completed ? 'Mark Incomplete' : 'Mark Complete';
                 } else {
                     document.getElementById('playerWrap').classList.add('hidden');
                     document.getElementById('activeModuleCard').classList.add('hidden');
@@ -143,6 +152,19 @@
                     });
                 });
             }
+
+            document.getElementById('completeBtn').addEventListener('click', async () => {
+                if (!active) return;
+                const nextState = !active.completed;
+                const { ok } = await apiFetch('module-progress', {
+                    method: 'POST',
+                    body: JSON.stringify({ slug, position: active.position, completed: nextState })
+                });
+                if (!ok) return;
+                active.completed = nextState;
+                renderPlayer();
+                renderList();
+            });
 
             renderPlayer();
             renderList();

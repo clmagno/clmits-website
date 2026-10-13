@@ -40,10 +40,11 @@ exports.handler = async (event) => {
         returning id, email
     `;
 
-    // Free tier: new accounts are auto-enrolled in every published course.
+    // Free tier: new accounts are auto-enrolled in every non-catalog (self-paced) course.
+    // Catalog-only courses (live bootcamps) require a separate paid enrollment.
     await sql`
         insert into enrollments (user_id, course_id, source)
-        select ${user.id}, id, 'free' from courses
+        select ${user.id}, id, 'free' from courses where is_catalog_only = false
         on conflict do nothing
     `;
 

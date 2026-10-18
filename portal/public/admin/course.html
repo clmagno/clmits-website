@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Edit Course | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
+            <a href="courses.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Manage Courses
+            </a>
+            <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-5xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <form id="courseForm" class="rounded-xl border border-line bg-white p-6">
+                <h1 class="text-2xl font-black tracking-tight">Course Details</h1>
+                <div class="mt-5 grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Title</label>
+                        <input name="title" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Slug</label>
+                        <input disabled class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-mono text-gray-500" id="slugDisplay">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Description</label>
+                    <textarea name="description" rows="2" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink"></textarea>
+                </div>
+                <label class="mt-4 flex items-center gap-2 text-sm">
+                    <input type="checkbox" name="requiresSubscription" class="h-4 w-4">
+                    Requires an active subscription
+                </label>
+                <div class="mt-5 flex items-center gap-3">
+                    <button type="submit" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Save Course</button>
+                    <p id="courseSaveStatus" class="hidden text-sm font-bold"></p>
+                </div>
+            </form>
+
+            <div class="mt-10 flex items-center justify-between">
+                <h2 class="text-2xl font-black tracking-tight">Modules</h2>
+                <button type="button" id="addModuleBtn" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">+ Add Module</button>
+            </div>
+            <p class="mt-1 text-sm text-gray-600">Module 1 should usually be the free preview. Paste any YouTube link for the video &mdash; it's converted to an embeddable link automatically.</p>
+
+            <div id="newModuleForm" class="mt-5 hidden"></div>
+            <div id="moduleList" class="mt-5 space-y-4"></div>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const slug = params.get('slug');
+
+        function moduleFormHtml(m, idPrefix) {
+            const m2 = m || { title: '', description: '', video_url: '', reading_content: '', is_free_preview: false };
+            return `
+                <div class="rounded-xl border border-signal/40 bg-signal/5 p-5">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Title</label>
+                            <input data-field="title" value="${escapeAttr(m2.title)}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Video URL (YouTube or direct embed)</label>
+                            <input data-field="videoUrl" value="${escapeAttr(m2.video_url || '')}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink" placeholder="https://www.youtube.com/watch?v=...">
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Short description</label>
+                        <input data-field="description" value="${escapeAttr(m2.description || '')}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    </div>
+                    <div class="mt-4">
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Companion reading (HTML, optional)</label>
+                        <textarea data-field="readingContent" rows="5" class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs outline-none focus:border-ink">${escapeHtml(m2.reading_content || '')}</textarea>
+                    </div>
+                    <label class="mt-4 flex items-center gap-2 text-sm">
+                        <input type="checkbox" data-field="isFreePreview" ${m2.is_free_preview ? 'checked' : ''} class="h-4 w-4">
+                        Free preview (visible without a subscription)
+                    </label>
+                    <div class="mt-5 flex items-center gap-3">
+                        <button type="button" data-action="save" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Save Module</button>
+                        <button type="button" data-action="cancel" class="rounded-lg border border-line bg-white px-5 py-2.5 text-sm font-bold hover:bg-gray-50">Cancel</button>
+                        <p data-role="error" class="hidden text-sm font-bold text-red-600"></p>
+                    </div>
+                </div>`;
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function escapeAttr(s) {
+            return escapeHtml(s).replace(/"/g, '&quot;');
+        }
+
+        function readModuleForm(container) {
+            return {
+                title: container.querySelector('[data-field="title"]').value.trim(),
+                description: container.querySelector('[data-field="description"]').value.trim(),
+                videoUrl: container.querySelector('[data-field="videoUrl"]').value.trim(),
+                readingContent: container.querySelector('[data-field="readingContent"]').value,
+                isFreePreview: container.querySelector('[data-field="isFreePreview"]').checked
+            };
+        }
+
+        function renderModuleRow(m) {
+            const tags = [];
+            if (m.is_free_preview) tags.push('<span class="rounded-md bg-emerald-100 px-2 py-1 text-[11px] font-black text-emerald-700">Free Preview</span>');
+            if (m.video_url) tags.push('<span class="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-600">Video</span>');
+            if (m.reading_content) tags.push('<span class="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-black text-gray-600">Reading</span>');
+            tags.push(m.has_quiz
+                ? '<span class="rounded-md bg-blue-100 px-2 py-1 text-[11px] font-black text-blue-700">Quiz</span>'
+                : '<span class="rounded-md bg-gray-50 px-2 py-1 text-[11px] font-bold text-gray-400">No Quiz</span>');
+
+            return `
+                <div class="rounded-xl border border-line bg-white p-5" data-module-id="${m.id}">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h3 class="text-base font-black">${m.position}. ${escapeHtml(m.title)}</h3>
+                                ${tags.join('')}
+                            </div>
+                            ${m.description ? `<p class="mt-1 text-sm text-gray-600">${escapeHtml(m.description)}</p>` : ''}
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button type="button" data-action="up" title="Move up" class="rounded-lg border border-line px-2.5 py-1.5 text-sm hover:bg-gray-50">&uarr;</button>
+                            <button type="button" data-action="down" title="Move down" class="rounded-lg border border-line px-2.5 py-1.5 text-sm hover:bg-gray-50">&darr;</button>
+                            <a href="quiz.html?moduleId=${m.id}&moduleTitle=${encodeURIComponent(m.title)}" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Quiz</a>
+                            <button type="button" data-action="edit" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Edit</button>
+                            <button type="button" data-action="delete" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-black text-red-600 hover:bg-red-50">Delete</button>
+                        </div>
+                    </div>
+                    <div data-role="editSlot" class="mt-4"></div>
+                </div>`;
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            if (!session.canManageContent) {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            if (!slug) {
+                document.getElementById('loadingState').textContent = 'No course specified.';
+                return;
+            }
+
+            let course, modules;
+
+            async function load() {
+                const { ok, data } = await apiFetch(`admin-course?slug=${encodeURIComponent(slug)}`);
+                if (!ok) {
+                    document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load this course.';
+                    return false;
+                }
+                course = data.course;
+                modules = data.modules;
+                return true;
+            }
+
+            function renderModules() {
+                document.getElementById('moduleList').innerHTML = modules.length
+                    ? modules.map(renderModuleRow).join('')
+                    : '<p class="text-sm text-gray-600">No modules yet. Click "+ Add Module" above.</p>';
+
+                document.querySelectorAll('[data-module-id]').forEach((row) => {
+                    const moduleId = row.dataset.moduleId;
+                    const module = modules.find((m) => m.id === moduleId);
+
+                    row.querySelector('[data-action="edit"]').addEventListener('click', () => {
+                        const slot = row.querySelector('[data-role="editSlot"]');
+                        slot.innerHTML = slot.innerHTML ? '' : moduleFormHtml(module);
+                        if (!slot.innerHTML) return;
+                        wireModuleForm(slot, async (payload) => {
+                            const { ok, data } = await apiFetch('admin-module', {
+                                method: 'PATCH',
+                                body: JSON.stringify({ moduleId, ...payload })
+                            });
+                            if (!ok) return { error: (data && data.error) || 'Could not save the module.' };
+                            if (await load()) renderModules();
+                            return null;
+                        }, () => { slot.innerHTML = ''; });
+                    });
+
+                    row.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+                        if (!confirm(`Delete "${module.title}"? This also deletes its quiz and any learner progress on it.`)) return;
+                        const { ok } = await apiFetch(`admin-module?moduleId=${encodeURIComponent(moduleId)}`, { method: 'DELETE' });
+                        if (ok && (await load())) renderModules();
+                    });
+
+                    row.querySelector('[data-action="up"]').addEventListener('click', async () => {
+                        await apiFetch('admin-module-reorder', { method: 'POST', body: JSON.stringify({ moduleId, direction: 'up' }) });
+                        if (await load()) renderModules();
+                    });
+                    row.querySelector('[data-action="down"]').addEventListener('click', async () => {
+                        await apiFetch('admin-module-reorder', { method: 'POST', body: JSON.stringify({ moduleId, direction: 'down' }) });
+                        if (await load()) renderModules();
+                    });
+                });
+            }
+
+            function wireModuleForm(container, onSave, onCancel) {
+                container.querySelector('[data-action="save"]').addEventListener('click', async () => {
+                    const payload = readModuleForm(container);
+                    const errorEl = container.querySelector('[data-role="error"]');
+                    errorEl.classList.add('hidden');
+                    if (!payload.title) {
+                        errorEl.textContent = 'Title is required.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+                    const result = await onSave(payload);
+                    if (result && result.error) {
+                        errorEl.textContent = result.error;
+                        errorEl.classList.remove('hidden');
+                    }
+                });
+                container.querySelector('[data-action="cancel"]').addEventListener('click', onCancel);
+            }
+
+            if (!(await load())) return;
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            document.getElementById('courseForm').title.value = course.title;
+            document.getElementById('courseForm').description.value = course.description || '';
+            document.getElementById('courseForm').requiresSubscription.checked = course.requires_subscription;
+            document.getElementById('slugDisplay').value = course.slug;
+
+            document.getElementById('courseForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const statusEl = document.getElementById('courseSaveStatus');
+                const { ok, data } = await apiFetch(`admin-course?slug=${encodeURIComponent(slug)}`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({
+                        title: form.title.value,
+                        description: form.description.value,
+                        requiresSubscription: form.requiresSubscription.checked
+                    })
+                });
+                statusEl.classList.remove('hidden');
+                if (ok) {
+                    statusEl.textContent = 'Saved.';
+                    statusEl.className = 'text-sm font-bold text-emerald-600';
+                } else {
+                    statusEl.textContent = (data && data.error) || 'Could not save.';
+                    statusEl.className = 'text-sm font-bold text-red-600';
+                }
+            });
+
+            const newModuleForm = document.getElementById('newModuleForm');
+            document.getElementById('addModuleBtn').addEventListener('click', () => {
+                if (newModuleForm.innerHTML) {
+                    newModuleForm.innerHTML = '';
+                    newModuleForm.classList.add('hidden');
+                    return;
+                }
+                newModuleForm.innerHTML = moduleFormHtml(null);
+                newModuleForm.classList.remove('hidden');
+                wireModuleForm(newModuleForm, async (payload) => {
+                    const { ok, data } = await apiFetch('admin-module', {
+                        method: 'POST',
+                        body: JSON.stringify({ courseSlug: slug, ...payload })
+                    });
+                    if (!ok) return { error: (data && data.error) || 'Could not create the module.' };
+                    newModuleForm.innerHTML = '';
+                    newModuleForm.classList.add('hidden');
+                    if (await load()) renderModules();
+                    return null;
+                }, () => {
+                    newModuleForm.innerHTML = '';
+                    newModuleForm.classList.add('hidden');
+                });
+            });
+
+            renderModules();
+        })();
+    </script>
+</body>
+</html>

@@ -13,8 +13,9 @@ exports.handler = async (event) => {
 
     const sql = getDb();
 
-    const [me] = await sql`select subscription_until from users where id = ${sessionUser.id}`;
+    const [me] = await sql`select subscription_until, role from users where id = ${sessionUser.id}`;
     const active = Boolean(me && me.subscription_until && new Date(me.subscription_until) > new Date());
+    const role = me ? me.role : 'student';
 
     const courses = await sql`
         select
@@ -43,6 +44,8 @@ exports.handler = async (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             email: sessionUser.email,
+            role,
+            canManageContent: role === 'admin' || role === 'instructor',
             subscription: { active, until: me ? me.subscription_until : null },
             courses,
             offerings

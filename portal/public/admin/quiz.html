@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Edit Quiz | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-4xl items-center justify-between px-5">
+            <a href="#" id="backLink" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Back to Course
+            </a>
+            <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-4xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <h1 class="text-2xl font-black tracking-tight">Quiz: <span id="moduleTitle"></span></h1>
+            <p class="mt-2 text-sm text-gray-600">Each question needs at least 2 options with exactly one marked correct. Saving replaces the whole quiz and clears past attempt history for this module.</p>
+
+            <div class="mt-6">
+                <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Quiz Title</label>
+                <input id="quizTitleInput" class="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink" placeholder="Knowledge Check">
+            </div>
+
+            <div id="questionList" class="mt-6 space-y-5"></div>
+
+            <div class="mt-5 flex items-center gap-3">
+                <button type="button" id="addQuestionBtn" class="rounded-lg border border-line bg-white px-5 py-2.5 text-sm font-black hover:bg-gray-50">+ Add Question</button>
+            </div>
+
+            <div class="mt-8 flex items-center gap-3 border-t border-line pt-6">
+                <button type="button" id="saveQuizBtn" class="rounded-lg bg-ink px-6 py-3 text-sm font-black text-white transition hover:-translate-y-0.5">Save Quiz</button>
+                <button type="button" id="deleteQuizBtn" class="rounded-lg border border-red-200 px-6 py-3 text-sm font-black text-red-600 hover:bg-red-50">Delete Quiz</button>
+                <p id="statusMsg" class="hidden text-sm font-bold"></p>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const moduleId = params.get('moduleId');
+        const moduleTitle = params.get('moduleTitle') || '';
+
+        function escapeAttr(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        let questionSeq = 0;
+
+        function questionBlockHtml(q) {
+            const qid = `q${questionSeq++}`;
+            const options = (q && q.options && q.options.length) ? q.options : [{ label: '', isCorrect: true }, { label: '', isCorrect: false }];
+            return `
+                <div class="rounded-xl border border-line bg-white p-5" data-question-block data-qid="${qid}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1">
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Question</label>
+                            <input data-field="prompt" value="${escapeAttr(q ? q.prompt : '')}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink" placeholder="What does SELECT do?">
+                        </div>
+                        <button type="button" data-action="removeQuestion" class="mt-6 shrink-0 rounded-lg border border-red-200 px-3 py-2 text-xs font-black text-red-600 hover:bg-red-50">Remove</button>
+                    </div>
+                    <div class="mt-3">
+                        <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Explanation (optional, shown after answering)</label>
+                        <input data-field="explanation" value="${escapeAttr(q && q.explanation ? q.explanation : '')}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    </div>
+                    <div class="mt-4" data-role="options">
+                        ${options.map((o) => optionRowHtml(qid, o)).join('')}
+                    </div>
+                    <button type="button" data-action="addOption" class="mt-2 text-xs font-black text-signal hover:underline">+ Add option</button>
+                </div>`;
+        }
+
+        function optionRowHtml(qid, o) {
+            return `
+                <div class="mt-2 flex items-center gap-3" data-role="optionRow">
+                    <input type="radio" name="correct-${qid}" data-field="isCorrect" ${o.isCorrect ? 'checked' : ''} class="h-4 w-4 shrink-0">
+                    <input data-field="label" value="${escapeAttr(o.label || '')}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink" placeholder="Option text">
+                    <button type="button" data-action="removeOption" class="shrink-0 text-xs font-bold text-gray-400 hover:text-red-600">&times;</button>
+                </div>`;
+        }
+
+        function wireQuestionBlock(block) {
+            block.querySelector('[data-action="removeQuestion"]').addEventListener('click', () => block.remove());
+            block.querySelector('[data-action="addOption"]').addEventListener('click', () => {
+                const qid = block.dataset.qid;
+                const optionsEl = block.querySelector('[data-role="options"]');
+                optionsEl.insertAdjacentHTML('beforeend', optionRowHtml(qid, { label: '', isCorrect: false }));
+                wireOptionRemovers(block);
+            });
+            wireOptionRemovers(block);
+        }
+
+        function wireOptionRemovers(block) {
+            block.querySelectorAll('[data-action="removeOption"]').forEach((btn) => {
+                btn.onclick = () => {
+                    const row = btn.closest('[data-role="optionRow"]');
+                    const optionsEl = block.querySelector('[data-role="options"]');
+                    if (optionsEl.children.length > 2) row.remove();
+                };
+            });
+        }
+
+        function readQuiz() {
+            const questions = Array.from(document.querySelectorAll('[data-question-block]')).map((block) => {
+                const options = Array.from(block.querySelectorAll('[data-role="optionRow"]')).map((row) => ({
+                    label: row.querySelector('[data-field="label"]').value.trim(),
+                    isCorrect: row.querySelector('[data-field="isCorrect"]').checked
+                }));
+                return {
+                    prompt: block.querySelector('[data-field="prompt"]').value.trim(),
+                    explanation: block.querySelector('[data-field="explanation"]').value.trim(),
+                    options
+                };
+            });
+            return { title: document.getElementById('quizTitleInput').value.trim(), questions };
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            if (!session.canManageContent) {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            if (!moduleId) {
+                document.getElementById('loadingState').textContent = 'No module specified.';
+                return;
+            }
+
+            document.getElementById('moduleTitle').textContent = moduleTitle;
+            document.getElementById('backLink').addEventListener('click', (e) => {
+                e.preventDefault();
+                history.length > 1 ? history.back() : (window.location.href = 'courses.html');
+            });
+
+            const { ok, data } = await apiFetch(`admin-quiz?moduleId=${encodeURIComponent(moduleId)}`);
+            if (!ok) {
+                document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load this quiz.';
+                return;
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            const list = document.getElementById('questionList');
+            if (data.quiz) {
+                document.getElementById('quizTitleInput').value = data.quiz.title;
+                data.quiz.questions.forEach((q) => {
+                    list.insertAdjacentHTML('beforeend', questionBlockHtml(q));
+                });
+            } else {
+                document.getElementById('quizTitleInput').value = 'Knowledge Check';
+                list.insertAdjacentHTML('beforeend', questionBlockHtml(null));
+            }
+            list.querySelectorAll('[data-question-block]').forEach(wireQuestionBlock);
+
+            document.getElementById('addQuestionBtn').addEventListener('click', () => {
+                list.insertAdjacentHTML('beforeend', questionBlockHtml(null));
+                wireQuestionBlock(list.lastElementChild);
+            });
+
+            const statusEl = document.getElementById('statusMsg');
+            function showStatus(ok, text) {
+                statusEl.textContent = text;
+                statusEl.className = ok ? 'text-sm font-bold text-emerald-600' : 'text-sm font-bold text-red-600';
+                statusEl.classList.remove('hidden');
+            }
+
+            document.getElementById('saveQuizBtn').addEventListener('click', async () => {
+                const quiz = readQuiz();
+                if (!quiz.title) return showStatus(false, 'Give the quiz a title.');
+                if (!quiz.questions.length) return showStatus(false, 'Add at least one question.');
+                for (const q of quiz.questions) {
+                    if (!q.prompt) return showStatus(false, 'Every question needs a prompt.');
+                    if (q.options.filter((o) => o.isCorrect).length !== 1) return showStatus(false, 'Every question needs exactly one correct option.');
+                    if (q.options.some((o) => !o.label)) return showStatus(false, 'Every option needs text.');
+                }
+
+                const result = await apiFetch('admin-quiz', { method: 'PUT', body: JSON.stringify({ moduleId, ...quiz }) });
+                showStatus(result.ok, result.ok ? 'Saved.' : ((result.data && result.data.error) || 'Could not save the quiz.'));
+            });
+
+            document.getElementById('deleteQuizBtn').addEventListener('click', async () => {
+                if (!confirm('Delete this quiz? This also clears past attempt history for it.')) return;
+                const result = await apiFetch(`admin-quiz?moduleId=${encodeURIComponent(moduleId)}`, { method: 'DELETE' });
+                if (result.ok) {
+                    list.innerHTML = '';
+                    document.getElementById('quizTitleInput').value = 'Knowledge Check';
+                    list.insertAdjacentHTML('beforeend', questionBlockHtml(null));
+                    list.querySelectorAll('[data-question-block]').forEach(wireQuestionBlock);
+                    showStatus(true, 'Quiz deleted.');
+                } else {
+                    showStatus(false, (result.data && result.data.error) || 'Could not delete the quiz.');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

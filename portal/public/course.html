@@ -25,7 +25,10 @@
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
                 Your Courses
             </a>
-            <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+            <div class="flex items-center gap-3">
+                <a id="editCourseLink" href="#" class="hidden rounded-lg bg-ink px-4 py-2 text-sm font-black text-white hover:-translate-y-0.5">Edit This Course</a>
+                <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+            </div>
         </div>
     </nav>
 
@@ -128,6 +131,11 @@
             document.getElementById('logoutBtn').addEventListener('click', logout);
 
             const slug = new URLSearchParams(window.location.search).get('slug');
+            if (session.canManageContent && slug) {
+                const editLink = document.getElementById('editCourseLink');
+                editLink.href = `admin/course.html?slug=${encodeURIComponent(slug)}`;
+                editLink.classList.remove('hidden');
+            }
             if (!slug) {
                 document.getElementById('loadingState').textContent = 'No course specified.';
                 return;

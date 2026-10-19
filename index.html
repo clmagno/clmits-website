@@ -1155,6 +1155,10 @@
             document.body.style.overflow = '';
         }
 
+        // The modal markup sits below this script in the HTML, so wait for
+        // the DOM to finish parsing before looking up #reserveForm -- doing
+        // it inline here would hit a null element and throw.
+        document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('reserveForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const errorEl = document.getElementById('reserveError');
@@ -1198,6 +1202,7 @@
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Continue to Payment →';
             }
+        });
         });
     </script>
 

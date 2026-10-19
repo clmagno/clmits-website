@@ -49,21 +49,27 @@ exports.handler = async (event) => {
     }
 
     const correctOptions = await sql`
-        select o.question_id, o.id
+        select o.question_id, o.id, o.label, q.explanation
         from quiz_options o
         join quiz_questions q on q.id = o.question_id
         where q.quiz_id = ${quizId} and o.is_correct = true
     `;
-    const correctByQuestion = new Map(correctOptions.map((o) => [o.question_id, o.id]));
+    const correctByQuestion = new Map(correctOptions.map((o) => [o.question_id, o]));
 
     let score = 0;
     const total = correctByQuestion.size;
     const results = [];
-    for (const [questionId, correctOptionId] of correctByQuestion) {
+    for (const [questionId, correct] of correctByQuestion) {
         const answer = answers.find((a) => a.questionId === questionId);
-        const isCorrect = Boolean(answer && answer.optionId === correctOptionId);
+        const isCorrect = Boolean(answer && answer.optionId === correct.id);
         if (isCorrect) score += 1;
-        results.push({ questionId, correctOptionId, isCorrect });
+        results.push({
+            questionId,
+            correctOptionId: correct.id,
+            correctOptionLabel: correct.label,
+            explanation: correct.explanation,
+            isCorrect
+        });
     }
 
     await sql`

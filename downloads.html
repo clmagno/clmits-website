@@ -115,6 +115,32 @@
                         <span class="rounded-md bg-paper px-2.5 py-1">Nested SELECT</span>
                         <span class="rounded-md bg-paper px-2.5 py-1">MAX()</span>
                     </div>
+
+                    <div class="mt-5 border-t border-line pt-5 text-sm leading-6 text-gray-700">
+                        <h3 class="font-black text-ink">How it works</h3>
+                        <p class="mt-2">
+                            A subquery is just a <code>SELECT</code> that runs first and hands its single answer to the outer query, as if you'd typed the result in by hand. Here, <code>(SELECT MAX(price) FROM orders)</code> runs once and resolves to a single number &mdash; the highest price in the whole table. The outer query then asks: &ldquo;which row's price equals that number?&rdquo;
+                        </p>
+                        <p class="mt-3">
+                            This is different from sorting and grabbing the top row with <code>ORDER BY price DESC LIMIT 1</code>, which also finds the one biggest item &mdash; but that trick breaks the moment you need the biggest item <em>per group</em> instead (e.g. the most expensive item in each category). That's where correlated subqueries take over, in a later episode.
+                        </p>
+                        <p class="mt-3 text-xs text-gray-500">
+                            The <code>friends</code> table isn't needed for this challenge &mdash; it's here so Episode 11 can introduce joins using the same dataset.
+                        </p>
+                    </div>
+
+                    <details class="group mt-4 rounded-lg border border-line bg-paper">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-black text-ink">
+                            <span>Show the solution</span>
+                            <svg class="h-4 w-4 shrink-0 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </summary>
+                        <div class="border-t border-line p-4 text-sm leading-6 text-gray-700">
+                            <pre class="overflow-x-auto rounded-md bg-ink p-4 text-xs text-white"><code>SELECT item, price
+FROM orders
+WHERE price = (SELECT MAX(price) FROM orders);</code></pre>
+                            <p class="mt-3"><strong class="text-ink">Result:</strong> <code>Fried Chicken</code> at <code>₱120</code> &mdash; the single most expensive item Ana ordered.</p>
+                        </div>
+                    </details>
                 </article>
 
                 <article id="ep9" class="rounded-2xl border border-gray-300 bg-white p-7 shadow-[0_5px_0_rgba(0,0,0,0.1)] sm:p-8">
@@ -137,6 +163,30 @@
                         <span class="rounded-md bg-paper px-2.5 py-1">HAVING</span>
                         <span class="rounded-md bg-paper px-2.5 py-1">Aggregate functions</span>
                     </div>
+
+                    <div class="mt-5 border-t border-line pt-5 text-sm leading-6 text-gray-700">
+                        <h3 class="font-black text-ink">How it works</h3>
+                        <p class="mt-2">
+                            Think of <code>GROUP BY</code> as drawing an invisible line around every row that shares the same value in a column &mdash; here, every order with the same <code>category</code> gets folded into one bucket. Once rows are grouped, you can't ask for an individual row's price anymore; you can only ask something about the whole bucket, which is exactly what aggregate functions (<code>SUM</code>, <code>COUNT</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code>) are for.
+                        </p>
+                        <p class="mt-3">
+                            The part that trips up almost everyone: <code>WHERE</code> filters rows <em>before</em> grouping happens, so it can't see a group's total &mdash; <code>SUM(price)</code> doesn't exist yet at that point in the query. <code>HAVING</code> filters <em>after</em> grouping, once the totals exist. That's why &ldquo;categories with a total over ₱150&rdquo; has to go in a <code>HAVING</code> clause, never a <code>WHERE</code> clause.
+                        </p>
+                    </div>
+
+                    <details class="group mt-4 rounded-lg border border-line bg-paper">
+                        <summary class="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-black text-ink">
+                            <span>Show the solution</span>
+                            <svg class="h-4 w-4 shrink-0 transition group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                        </summary>
+                        <div class="border-t border-line p-4 text-sm leading-6 text-gray-700">
+                            <pre class="overflow-x-auto rounded-md bg-ink p-4 text-xs text-white"><code>SELECT category, SUM(price) AS total
+FROM orders
+GROUP BY category
+HAVING SUM(price) > 150;</code></pre>
+                            <p class="mt-3"><strong class="text-ink">Result:</strong> <code>Food</code> (₱470) and <code>Dessert</code> (₱180) both clear ₱150. <code>Drinks</code> totals only ₱85, so it's filtered out.</p>
+                        </div>
+                    </details>
                 </article>
 
             </div>

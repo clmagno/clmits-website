@@ -118,7 +118,7 @@
                         </div>
                         <textarea data-field="readingContent" rows="9" class="w-full rounded-b-lg border border-gray-300 px-3 py-2 font-mono text-xs leading-5 outline-none focus:border-ink" placeholder="## Heading&#10;&#10;Write in Markdown &mdash; **bold**, lists, &#96;code&#96;, &gt; quotes, and fenced &#96;&#96;&#96; code blocks all work.">${escapeHtml(m2.reading_content || '')}</textarea>
                         <div data-md-preview class="prose prose-sm hidden max-w-none rounded-b-lg border border-gray-300 bg-white px-4 py-3 leading-7 text-gray-800"></div>
-                        <p class="mt-1 text-xs text-gray-500">Markdown: <code class="font-mono">**bold**</code>, <code class="font-mono"># Heading</code>, <code class="font-mono">- list item</code>, <code class="font-mono">`code`</code>, or a fenced <code class="font-mono">```</code> block for multi-line code.</p>
+                        <p class="mt-1 text-xs text-gray-500">Markdown: <code class="font-mono">**bold**</code>, <code class="font-mono"># Heading</code>, <code class="font-mono">- list item</code>, <code class="font-mono">&#96;code&#96;</code>, or a fenced <code class="font-mono">&#96;&#96;&#96;</code> block for multi-line code.</p>
                     </div>
                     <label class="mt-4 flex items-center gap-2 text-sm">
                         <input type="checkbox" data-field="isFreePreview" ${m2.is_free_preview ? 'checked' : ''} class="h-4 w-4">

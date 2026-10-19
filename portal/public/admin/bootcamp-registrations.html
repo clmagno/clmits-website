@@ -90,12 +90,55 @@
             return '<span class="rounded-md bg-gray-100 px-2 py-1 text-xs font-black text-gray-500">Pending</span>';
         }
 
-        function renderRow(r) {
-            const amountCell = r.status === 'paid'
-                ? `${fmtPeso(r.amount_centavos)}<span class="block text-xs text-gray-400">of ${fmtPeso(r.total_price_centavos)} total</span>`
-                : `${fmtPeso(r.amount_centavos)} <span class="text-xs text-gray-400">(unpaid)</span>`;
+        function installmentStatusBadge(status) {
+            if (status === 'paid') return '<span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Paid</span>';
+            if (status === 'pending') return '<span class="rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-black text-amber-700">Link Sent</span>';
+            return '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">Not Sent Yet</span>';
+        }
 
+        // Position 1 is the registration's own first payment, not a row in
+        // bootcamp_installments -- stitch it in as a synthetic entry so the
+        // plan reads as one continuous schedule.
+        function fullPlan(r) {
+            return [
+                { id: null, position: 1, label: 'First Payment (at registration)', amount_centavos: r.amount_centavos, status: r.status },
+                ...r.installments
+            ];
+        }
+
+        function renderPlanDetailRow(r) {
+            const rows = fullPlan(r).map((i) => {
+                const actionCell = i.position === 1
+                    ? '<span class="text-[11px] text-gray-400">Charged at registration</span>'
+                    : i.status === 'paid'
+                        ? '<span class="text-[11px] text-gray-400">&mdash;</span>'
+                        : `<button type="button" class="genLinkBtn rounded-md bg-ink px-2.5 py-1 text-[11px] font-black text-white hover:brightness-110" data-installment="${i.id}">${i.status === 'pending' ? 'Resend Link' : 'Generate Link'}</button>
+                           <span class="genLinkResult ml-2 text-[11px] text-signal break-all" data-installment-result="${i.id}"></span>`;
+                return `
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line py-2 last:border-0">
+                        <div class="text-xs">
+                            <span class="font-bold">${escapeHtml(i.label)}</span>
+                            <span class="ml-2 text-gray-500">${fmtPeso(i.amount_centavos)}</span>
+                            <span class="ml-2">${installmentStatusBadge(i.status)}</span>
+                        </div>
+                        <div>${actionCell}</div>
+                    </div>`;
+            }).join('');
             return `
+                <tr class="planDetailRow hidden" data-reg-detail="${r.id}">
+                    <td colspan="7" class="bg-paper px-4 py-3">${rows}</td>
+                </tr>`;
+        }
+
+        function renderRow(r) {
+            const hasPlan = r.installments.length > 0;
+            const amountCell = `
+                ${fmtPeso(r.amount_centavos)}${r.status === 'paid' ? '' : ' <span class="text-xs text-gray-400">(unpaid)</span>'}
+                <div class="text-xs text-gray-400">of ${fmtPeso(r.total_price_centavos)} total</div>
+                ${hasPlan ? `<button type="button" class="togglePlanBtn mt-1 text-xs font-bold text-signal hover:underline" data-reg="${r.id}">View payment plan &rarr;</button>` : ''}
+            `;
+
+            const mainRow = `
                 <tr class="align-top" data-q="${escapeHtml((r.full_name + ' ' + r.email).toLowerCase())}" data-offering="${escapeHtml(r.offering_slug)}" data-status="${r.status}">
                     <td class="px-4 py-3 font-bold">${escapeHtml(r.full_name)}</td>
                     <td class="px-4 py-3 text-gray-600">
@@ -108,6 +151,8 @@
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
                     <td class="px-4 py-3 text-gray-600">${fmtDate(r.paid_at || r.created_at)}</td>
                 </tr>`;
+
+            return hasPlan ? mainRow + renderPlanDetailRow(r) : mainRow;
         }
 
         function renderStats(regs) {
@@ -153,6 +198,50 @@
             renderStats(regs);
             document.getElementById('regsBody').innerHTML = regs.map(renderRow).join('');
 
+            document.getElementById('regsBody').addEventListener('click', async (e) => {
+                const toggleBtn = e.target.closest('.togglePlanBtn');
+                if (toggleBtn) {
+                    const detailRow = document.querySelector(`tr.planDetailRow[data-reg-detail="${toggleBtn.dataset.reg}"]`);
+                    if (detailRow) detailRow.classList.toggle('hidden');
+                    return;
+                }
+
+                const copyBtn = e.target.closest('.copyLinkBtn');
+                if (copyBtn) {
+                    try {
+                        await navigator.clipboard.writeText(copyBtn.dataset.link);
+                        copyBtn.textContent = 'Copied!';
+                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+                    } catch (err) { /* clipboard access denied -- link is still visible to select manually */ }
+                    return;
+                }
+
+                const genBtn = e.target.closest('.genLinkBtn');
+                if (genBtn) {
+                    const installmentId = genBtn.dataset.installment;
+                    const resultEl = document.querySelector(`[data-installment-result="${installmentId}"]`);
+                    genBtn.disabled = true;
+                    const originalText = genBtn.textContent;
+                    genBtn.textContent = 'Generating…';
+
+                    const { ok, data } = await apiFetch('admin-generate-installment-checkout', {
+                        method: 'POST',
+                        body: JSON.stringify({ installmentId })
+                    });
+
+                    genBtn.disabled = false;
+                    genBtn.textContent = originalText;
+
+                    if (!ok) {
+                        if (resultEl) resultEl.textContent = (data && data.error) || 'Failed to generate link.';
+                        return;
+                    }
+                    if (resultEl) {
+                        resultEl.innerHTML = `<a href="${escapeHtml(data.checkoutUrl)}" target="_blank" rel="noopener" class="underline">Payment link</a> &middot; <button type="button" class="copyLinkBtn font-bold text-signal hover:underline" data-link="${escapeHtml(data.checkoutUrl)}">Copy</button>`;
+                    }
+                }
+            });
+
             const offeringFilter = document.getElementById('offeringFilter');
             const offerings = [...new Set(regs.map((r) => r.offering_slug))].sort();
             offeringFilter.innerHTML = '<option value="">All offerings</option>' +
@@ -165,13 +254,22 @@
                 const offering = offeringFilter.value;
                 const paidOnly = paidOnlyFilter.checked;
                 let visibleCount = 0;
-                document.querySelectorAll('#regsBody tr').forEach((row) => {
+                // Only rows with data-q are registration rows; a planDetailRow
+                // has neither and always follows its own registration row.
+                document.querySelectorAll('#regsBody tr[data-q]').forEach((row) => {
                     const matchesSearch = !q || row.dataset.q.includes(q);
                     const matchesOffering = !offering || row.dataset.offering === offering;
                     const matchesPaid = !paidOnly || row.dataset.status === 'paid';
                     const show = matchesSearch && matchesOffering && matchesPaid;
                     row.style.display = show ? '' : 'none';
                     if (show) visibleCount += 1;
+
+                    const detailRow = row.nextElementSibling;
+                    if (detailRow && detailRow.classList.contains('planDetailRow') && !show) {
+                        detailRow.style.display = 'none';
+                    } else if (detailRow && detailRow.classList.contains('planDetailRow') && show) {
+                        detailRow.style.display = '';
+                    }
                 });
                 document.getElementById('emptyState').classList.toggle('hidden', visibleCount > 0);
             }

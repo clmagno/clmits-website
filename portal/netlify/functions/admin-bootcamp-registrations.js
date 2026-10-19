@@ -22,9 +22,28 @@ exports.handler = async (event) => {
         order by created_at desc
     `;
 
+    const installments = await sql`
+        select id, registration_id, position, label, amount_centavos, status, paid_at
+        from bootcamp_installments
+        order by registration_id, position
+    `;
+
+    const installmentsByRegistration = new Map();
+    for (const row of installments) {
+        if (!installmentsByRegistration.has(row.registration_id)) {
+            installmentsByRegistration.set(row.registration_id, []);
+        }
+        installmentsByRegistration.get(row.registration_id).push(row);
+    }
+
+    const registrationsWithPlan = registrations.map((r) => ({
+        ...r,
+        installments: installmentsByRegistration.get(r.id) || []
+    }));
+
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrations })
+        body: JSON.stringify({ registrations: registrationsWithPlan })
     };
 };

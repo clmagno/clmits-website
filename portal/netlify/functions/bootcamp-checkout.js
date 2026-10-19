@@ -64,11 +64,18 @@ exports.handler = async (event) => {
     const siteUrl = process.env.SITE_URL || 'https://clmits.com';
     const sql = getDb();
 
+    // Only the first installment is charged now (the down payment, or the
+    // full amount for a single-payment tier). Anything after that is
+    // scheduled in bootcamp_installments and collected later via a
+    // separately generated PayMongo link -- see admin-generate-installment-checkout.js.
+    const firstInstallment = tier.installments[0];
+    const remainingInstallments = tier.installments.slice(1);
+
     let session;
     try {
         session = await createCheckoutSession({
-            amountCentavos: tier.amountCentavos,
-            description: `CLMITS Bootcamp Reservation — ${tier.offeringTitle} (${tier.label})`,
+            amountCentavos: firstInstallment.amountCentavos,
+            description: `CLMITS Bootcamp Reservation — ${tier.offeringTitle} (${tier.label}) — ${firstInstallment.label}`,
             successUrl: `${siteUrl}/reserved.html`,
             cancelUrl: `${siteUrl}/index.html#bootcamps`,
             metadata: { offering_slug: offeringSlug, tier: tierKey, email }
@@ -77,12 +84,21 @@ exports.handler = async (event) => {
         return { statusCode: 502, headers, body: JSON.stringify({ error: err.message || 'Could not start checkout.' }) };
     }
 
-    await sql`
+    const [registration] = await sql`
         insert into bootcamp_registrations
             (full_name, email, phone, offering_slug, tier, tier_label, amount_centavos, total_price_centavos, paymongo_checkout_session_id, status)
         values
-            (${fullName}, ${email}, ${phone || null}, ${offeringSlug}, ${tierKey}, ${tier.label}, ${tier.amountCentavos}, ${tier.totalCentavos}, ${session.id}, 'pending')
+            (${fullName}, ${email}, ${phone || null}, ${offeringSlug}, ${tierKey}, ${tier.label}, ${firstInstallment.amountCentavos}, ${tier.totalCentavos}, ${session.id}, 'pending')
+        returning id
     `;
+
+    for (let i = 0; i < remainingInstallments.length; i++) {
+        const installment = remainingInstallments[i];
+        await sql`
+            insert into bootcamp_installments (registration_id, position, label, amount_centavos, status)
+            values (${registration.id}, ${i + 2}, ${installment.label}, ${installment.amountCentavos}, 'scheduled')
+        `;
+    }
 
     return {
         statusCode: 200,

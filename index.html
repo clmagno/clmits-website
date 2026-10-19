@@ -502,8 +502,8 @@
                                             <td class="p-3">₱10,000</td>
                                         </tr>
                                         <tr>
-                                            <td class="p-3 font-bold text-white">Early Bird — Installment</td>
-                                            <td class="p-3">₱5,000 down, then 3 monthly installments of ₱8,000</td>
+                                            <td class="p-3 font-bold text-white">Early Bird — Installment Plan</td>
+                                            <td class="p-3">₱12,500 down, then 3 monthly installments of ₱5,500</td>
                                             <td class="p-3 font-black text-violet-300">₱29,000</td>
                                             <td class="p-3">₱6,000</td>
                                         </tr>
@@ -531,7 +531,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="mt-4 text-xs text-white/50">Reservation fee: ₱5,000 to secure your slot (deductible from total tuition — not on top of it). Pay securely below and we'll follow up with payment confirmation and your Pre-Work Starter Pack.</p>
+                            <p class="mt-4 text-xs text-white/50">Early Bird tiers start with a ₱12,500 down payment today; the rest is paid off per the schedule above. Pay securely below and we'll follow up with payment confirmation and your Pre-Work Starter Pack.</p>
                         </div>
                         <button type="button" onclick="openReserveModal('cloud-de-bundle')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-violet-400 px-8 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
@@ -1085,30 +1085,30 @@
             'cloud-de-bundle': {
                 title: 'Cloud + Data Engineering Track',
                 tiers: [
-                    { key: 'early_bird_full', label: 'Early Bird — Full Cash', price: 25000, deadline: '2026-11-20' },
-                    { key: 'early_bird_installment', label: 'Early Bird — Installment (₱5,000 down payment today)', price: 5000, deadline: '2026-11-20' },
-                    { key: 'standard', label: 'Standard Rate', price: 35000, deadline: null }
+                    { key: 'early_bird_full', label: 'Early Bird — Full Cash Payment (Best Value)', total: 25000, dueToday: 12500, note: '+ ₱12,500 balance due on or before Nov 30, 2026', deadline: '2026-11-20' },
+                    { key: 'early_bird_installment', label: 'Early Bird — Installment Plan', total: 29000, dueToday: 12500, note: '+ 3 monthly installments of ₱5,500', deadline: '2026-11-20' },
+                    { key: 'standard', label: 'Standard Rate', total: 35000, dueToday: 35000, note: 'Paid in full', deadline: null }
                 ]
             },
             'gcp-bootcamp': {
                 title: 'GCP Associate Cloud Engineer Bootcamp',
                 tiers: [
-                    { key: 'early_bird', label: 'Early Bird', price: 29999, deadline: '2026-11-20' },
-                    { key: 'standard', label: 'Standard Rate', price: 35000, deadline: null }
+                    { key: 'early_bird', label: 'Early Bird', total: 29999, dueToday: 29999, note: 'Paid in full', deadline: '2026-11-20' },
+                    { key: 'standard', label: 'Standard Rate', total: 35000, dueToday: 35000, note: 'Paid in full', deadline: null }
                 ]
             },
             'python-automation': {
                 title: 'Python Automation for IT & Ops',
                 tiers: [
-                    { key: 'early_bird', label: 'Early Bird', price: 21000, deadline: '2026-11-13' },
-                    { key: 'standard', label: 'Standard Rate', price: 25000, deadline: null }
+                    { key: 'early_bird', label: 'Early Bird', total: 21000, dueToday: 21000, note: 'Paid in full', deadline: '2026-11-13' },
+                    { key: 'standard', label: 'Standard Rate', total: 25000, dueToday: 25000, note: 'Paid in full', deadline: null }
                 ]
             },
             'sql-foundations': {
                 title: 'SQL Foundations',
                 tiers: [
-                    { key: 'early_bird', label: 'Early Bird', price: 6500, deadline: '2026-10-23' },
-                    { key: 'standard', label: 'Standard Rate', price: 8000, deadline: null }
+                    { key: 'early_bird', label: 'Early Bird', total: 6500, dueToday: 6500, note: 'Paid in full', deadline: '2026-10-23' },
+                    { key: 'standard', label: 'Standard Rate', total: 8000, dueToday: 8000, note: 'Paid in full', deadline: null }
                 ]
             }
         };
@@ -1133,12 +1133,18 @@
             document.getElementById('reserveTiers').innerHTML = offering.tiers.map((t, i) => {
                 const available = tierAvailable(t);
                 return `
-                    <label class="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm ${available ? 'cursor-pointer border-gray-300 hover:border-ink' : 'cursor-not-allowed border-gray-200 opacity-50'}">
-                        <span class="flex items-center gap-2">
-                            <input type="radio" name="reserveTier" value="${t.key}" class="h-4 w-4" ${i === firstAvailableIndex ? 'checked' : ''} ${available ? '' : 'disabled'}>
-                            <span class="font-bold">${t.label}</span>
+                    <label class="flex items-start gap-3 rounded-lg border p-3 text-sm ${available ? 'cursor-pointer border-gray-300 hover:border-ink' : 'cursor-not-allowed border-gray-200 opacity-50'}">
+                        <input type="radio" name="reserveTier" value="${t.key}" class="mt-0.5 h-4 w-4 shrink-0" ${i === firstAvailableIndex ? 'checked' : ''} ${available ? '' : 'disabled'}>
+                        <span class="flex-1">
+                            <span class="flex items-start justify-between gap-2">
+                                <span class="font-bold">${t.label}</span>
+                                <span class="shrink-0 font-black">${available ? '₱' + t.total.toLocaleString() : 'Ended'}</span>
+                            </span>
+                            ${available ? `
+                                <span class="mt-1 block text-xs text-gray-500">Due today: <span class="font-bold text-ink">₱${t.dueToday.toLocaleString()}</span></span>
+                                ${t.note ? `<span class="mt-0.5 block text-xs text-gray-400">${t.note}</span>` : ''}
+                            ` : ''}
                         </span>
-                        <span class="font-black">${available ? '₱' + t.price.toLocaleString() : 'Ended'}</span>
                     </label>`;
             }).join('');
 

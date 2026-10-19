@@ -47,10 +47,9 @@ exports.handler = async (event) => {
     const sql = getDb();
     const checkoutSessionId = resource.id;
 
-    // This single webhook endpoint handles two different products, each with
-    // its own table. Try the subscription payment first (idempotent: only
-    // acts, and only once, on a row still pending); if no row matched there,
-    // it might be a bootcamp reservation instead.
+    // This single webhook endpoint handles three different payment records,
+    // each in its own table. Try each in turn (idempotent: only acts, and
+    // only once, on a row still pending) until one matches.
     const [paidRow] = await sql`
         update payments
         set status = 'paid', paid_at = now()
@@ -67,13 +66,24 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'OK' };
     }
 
-    await sql`
+    const [paidRegistration] = await sql`
         update bootcamp_registrations
+        set status = 'paid', paid_at = now()
+        where paymongo_checkout_session_id = ${checkoutSessionId} and status = 'pending'
+        returning id
+    `;
+
+    if (paidRegistration) {
+        return { statusCode: 200, body: 'OK' };
+    }
+
+    await sql`
+        update bootcamp_installments
         set status = 'paid', paid_at = now()
         where paymongo_checkout_session_id = ${checkoutSessionId} and status = 'pending'
     `;
 
-    // Either a bootcamp registration (now updated), an unknown session, or
+    // Either a bootcamp installment (now updated), an unknown session, or
     // already processed by an earlier delivery of this event -- all OK.
     return { statusCode: 200, body: 'OK' };
 };

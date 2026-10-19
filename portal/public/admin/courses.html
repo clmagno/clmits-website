@@ -24,6 +24,7 @@
             </a>
             <div class="flex items-center gap-4">
                 <a id="studentsLink" href="students.html" class="hidden text-sm font-bold hover:text-signal">Students</a>
+                <a id="registrationsLink" href="bootcamp-registrations.html" class="hidden text-sm font-bold hover:text-signal">Registrations</a>
                 <span id="userEmail" class="text-sm text-gray-600"></span>
                 <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
             </div>
@@ -99,6 +100,7 @@
             document.getElementById('logoutBtn').addEventListener('click', logout);
             if (session.role === 'admin') {
                 document.getElementById('studentsLink').classList.remove('hidden');
+                document.getElementById('registrationsLink').classList.remove('hidden');
             }
 
             if (!session.canManageContent) {

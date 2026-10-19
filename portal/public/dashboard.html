@@ -21,6 +21,7 @@
             <a href="https://clmits.com" class="text-sm font-black tracking-tight">CL Magno I.T. Solutions</a>
             <div class="flex items-center gap-4">
                 <a id="studentsLink" href="admin/students.html" class="hidden text-sm font-bold hover:text-signal">Students</a>
+                <a id="registrationsLink" href="admin/bootcamp-registrations.html" class="hidden text-sm font-bold hover:text-signal">Registrations</a>
                 <a id="adminLink" href="admin/courses.html" class="hidden rounded-lg bg-ink px-4 py-2 text-sm font-black text-white hover:-translate-y-0.5">Manage Content</a>
                 <span id="userEmail" class="text-sm text-gray-600"></span>
                 <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
@@ -112,6 +113,7 @@
             }
             if (session.role === 'admin') {
                 document.getElementById('studentsLink').classList.remove('hidden');
+                document.getElementById('registrationsLink').classList.remove('hidden');
             }
             renderSubscriptionBanner(session.subscription);
 

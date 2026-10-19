@@ -531,12 +531,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="mt-4 text-xs text-white/50">Reservation fee: ₱5,000 to secure your slot (deductible from total tuition — not on top of it). Send your inquiry below and we'll reply with payment instructions and your Pre-Work Starter Pack.</p>
+                            <p class="mt-4 text-xs text-white/50">Reservation fee: ₱5,000 to secure your slot (deductible from total tuition — not on top of it). Pay securely below and we'll follow up with payment confirmation and your Pre-Work Starter Pack.</p>
                         </div>
-                        <a href="index.html?interest=CloudDEBundle#contact" class="flex flex-wrap items-center justify-between gap-2 bg-violet-400 px-8 py-4 text-sm font-black text-ink transition hover:brightness-105">
+                        <button type="button" onclick="openReserveModal('cloud-de-bundle')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-violet-400 px-8 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
                             <span class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
-                        </a>
+                        </button>
                     </article>
 
                     <!-- GCP Associate Cloud Engineer Bootcamp -->
@@ -563,10 +563,10 @@
                                 <p class="text-sm font-bold text-white/40 line-through">₱35,000</p>
                             </div>
                         </div>
-                        <a href="index.html?interest=GCPBootcamp#contact" class="flex flex-wrap items-center justify-between gap-2 bg-blue-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
+                        <button type="button" onclick="openReserveModal('gcp-bootcamp')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-blue-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
                             <span class="text-xs font-bold opacity-70">Ends Nov 20</span>
-                        </a>
+                        </button>
                     </article>
 
                     <!-- Python Automation for IT & Ops -->
@@ -593,10 +593,10 @@
                                 <p class="text-sm font-bold text-white/40 line-through">₱25,000</p>
                             </div>
                         </div>
-                        <a href="index.html?interest=PythonAutomation#contact" class="flex flex-wrap items-center justify-between gap-2 bg-amber-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
+                        <button type="button" onclick="openReserveModal('python-automation')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-amber-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
                             <span class="text-xs font-bold opacity-70">Ends Nov 13</span>
-                        </a>
+                        </button>
                     </article>
 
                     <!-- SQL Foundations -->
@@ -625,10 +625,10 @@
                                 </div>
                             </div>
                         </div>
-                        <a href="index.html?interest=SQLFoundations#contact" class="flex flex-wrap items-center justify-between gap-2 bg-teal-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
+                        <button type="button" onclick="openReserveModal('sql-foundations')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-teal-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
                             <span class="text-xs font-bold opacity-70">Early bird ends Oct 23</span>
-                        </a>
+                        </button>
                     </article>
                 </div>
 
@@ -642,7 +642,7 @@
                     </div>
                 </div>
 
-                <p class="mt-8 text-center text-xs text-white/40">Reservation fee required to secure your slot · Payment instructions (bank transfer / GCash) are sent directly once we hear from you.</p>
+                <p class="mt-8 text-center text-xs text-white/40">Pay securely online via GCash, GCredit, or card — powered by PayMongo. Your slot is confirmed instantly once payment goes through.</p>
             </div>
         </section>
 
@@ -1077,6 +1077,165 @@
             }, { threshold: 0.15 });
             targets.forEach((el) => observer.observe(el));
         })();
+
+        // Bootcamp "Reserve your slot" payment modal -- guest checkout, no
+        // portal account needed. Prices/deadlines here are for display only;
+        // the Netlify function re-validates everything server-side.
+        const BOOTCAMP_OFFERINGS = {
+            'cloud-de-bundle': {
+                title: 'Cloud + Data Engineering Track',
+                tiers: [
+                    { key: 'early_bird_full', label: 'Early Bird — Full Cash', price: 25000, deadline: '2026-11-20' },
+                    { key: 'early_bird_installment', label: 'Early Bird — Installment (₱5,000 down payment today)', price: 5000, deadline: '2026-11-20' },
+                    { key: 'standard', label: 'Standard Rate', price: 35000, deadline: null }
+                ]
+            },
+            'gcp-bootcamp': {
+                title: 'GCP Associate Cloud Engineer Bootcamp',
+                tiers: [
+                    { key: 'early_bird', label: 'Early Bird', price: 29999, deadline: '2026-11-20' },
+                    { key: 'standard', label: 'Standard Rate', price: 35000, deadline: null }
+                ]
+            },
+            'python-automation': {
+                title: 'Python Automation for IT & Ops',
+                tiers: [
+                    { key: 'early_bird', label: 'Early Bird', price: 21000, deadline: '2026-11-13' },
+                    { key: 'standard', label: 'Standard Rate', price: 25000, deadline: null }
+                ]
+            },
+            'sql-foundations': {
+                title: 'SQL Foundations',
+                tiers: [
+                    { key: 'early_bird', label: 'Early Bird', price: 6500, deadline: '2026-10-23' },
+                    { key: 'standard', label: 'Standard Rate', price: 8000, deadline: null }
+                ]
+            }
+        };
+
+        const BOOTCAMP_CHECKOUT_URL = 'https://portal.clmits.com/.netlify/functions/bootcamp-checkout';
+
+        let currentOfferingSlug = null;
+
+        function tierAvailable(tier) {
+            if (!tier.deadline) return true;
+            return new Date() <= new Date(`${tier.deadline}T23:59:59+08:00`);
+        }
+
+        function openReserveModal(slug) {
+            const offering = BOOTCAMP_OFFERINGS[slug];
+            if (!offering) return;
+            currentOfferingSlug = slug;
+
+            document.getElementById('reserveModalTitle').textContent = offering.title;
+
+            const firstAvailableIndex = offering.tiers.findIndex(tierAvailable);
+            document.getElementById('reserveTiers').innerHTML = offering.tiers.map((t, i) => {
+                const available = tierAvailable(t);
+                return `
+                    <label class="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm ${available ? 'cursor-pointer border-gray-300 hover:border-ink' : 'cursor-not-allowed border-gray-200 opacity-50'}">
+                        <span class="flex items-center gap-2">
+                            <input type="radio" name="reserveTier" value="${t.key}" class="h-4 w-4" ${i === firstAvailableIndex ? 'checked' : ''} ${available ? '' : 'disabled'}>
+                            <span class="font-bold">${t.label}</span>
+                        </span>
+                        <span class="font-black">${available ? '₱' + t.price.toLocaleString() : 'Ended'}</span>
+                    </label>`;
+            }).join('');
+
+            document.getElementById('reserveError').classList.add('hidden');
+            document.getElementById('reserveForm').reset();
+            document.getElementById('reserveSubmitBtn').disabled = false;
+            document.getElementById('reserveSubmitBtn').textContent = 'Continue to Payment →';
+            document.getElementById('reserveModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeReserveModal() {
+            document.getElementById('reserveModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('reserveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('reserveError');
+            errorEl.classList.add('hidden');
+
+            const tierInput = document.querySelector('input[name="reserveTier"]:checked');
+            if (!tierInput) {
+                errorEl.textContent = 'Please select a pricing option.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const fullName = document.getElementById('reserveName').value.trim();
+            const email = document.getElementById('reserveEmail').value.trim();
+            const phone = document.getElementById('reservePhone').value.trim();
+
+            const submitBtn = document.getElementById('reserveSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Redirecting to payment…';
+
+            try {
+                const res = await fetch(BOOTCAMP_CHECKOUT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fullName,
+                        email,
+                        phone,
+                        offeringSlug: currentOfferingSlug,
+                        tier: tierInput.value
+                    })
+                });
+                const data = await res.json().catch(() => null);
+                if (!res.ok || !data || !data.checkoutUrl) {
+                    throw new Error((data && data.error) || 'Could not start checkout. Please try again.');
+                }
+                window.location.href = data.checkoutUrl;
+            } catch (err) {
+                errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+                errorEl.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Continue to Payment →';
+            }
+        });
     </script>
+
+    <!-- Bootcamp reservation payment modal -->
+    <div id="reserveModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
+        <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Reserve Your Slot</p>
+                    <h3 id="reserveModalTitle" class="mt-1 text-xl font-black tracking-tight text-ink"></h3>
+                </div>
+                <button type="button" onclick="closeReserveModal()" class="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-ink" aria-label="Close">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form id="reserveForm" class="mt-5 space-y-4">
+                <div id="reserveTiers" class="space-y-2"></div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">Full Name</label>
+                    <input id="reserveName" type="text" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">Email</label>
+                    <input id="reserveEmail" type="email" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">Phone (optional)</label>
+                    <input id="reservePhone" type="tel" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                </div>
+
+                <p id="reserveError" class="hidden rounded-lg bg-red-50 p-3 text-xs font-bold text-red-600"></p>
+
+                <button id="reserveSubmitBtn" type="submit" class="w-full rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:brightness-110">Continue to Payment →</button>
+                <p class="text-center text-[11px] text-gray-400">You'll be redirected to PayMongo's secure checkout (GCash, GCredit, or card).</p>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

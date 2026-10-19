@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Bootcamp Registrations | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+            <a href="../dashboard.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Your Courses
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="students.html" class="text-sm font-bold hover:text-signal">Students</a>
+                <a href="courses.html" class="text-sm font-bold hover:text-signal">Manage Content</a>
+                <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-6xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <h1 class="text-3xl font-black tracking-tight">Bootcamp Registrations</h1>
+            <p class="mt-2 text-sm text-gray-600">Everyone who's paid (or started to pay) for a live cohort bootcamp via clmits.com. Follow up with the Pre-Work Starter Pack and Zoom link once they show as Paid.</p>
+
+            <div id="statChips" class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4"></div>
+
+            <div class="mt-8 flex flex-wrap items-center gap-3">
+                <input id="searchInput" type="search" placeholder="Search by name or email..." class="w-full max-w-sm rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                <select id="offeringFilter" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <option value="">All offerings</option>
+                </select>
+                <label class="flex shrink-0 items-center gap-2 text-sm font-bold text-gray-600">
+                    <input type="checkbox" id="paidOnlyFilter" class="h-4 w-4">
+                    Paid only
+                </label>
+            </div>
+
+            <div class="mt-5 overflow-x-auto rounded-xl border border-line bg-white">
+                <table class="w-full text-left text-sm">
+                    <thead class="border-b border-line bg-paper text-xs font-black uppercase tracking-wide text-gray-500">
+                        <tr>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Contact</th>
+                            <th class="px-4 py-3">Offering</th>
+                            <th class="px-4 py-3">Tier</th>
+                            <th class="px-4 py-3">Amount</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="regsBody" class="divide-y divide-line"></tbody>
+                </table>
+            </div>
+            <p id="emptyState" class="hidden py-10 text-center text-sm text-gray-500">No registrations match.</p>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        function fmtDate(iso) {
+            if (!iso) return '&mdash;';
+            return new Date(iso).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtPeso(centavos) {
+            return `₱${(centavos / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        }
+
+        function statusBadge(status) {
+            if (status === 'paid') return '<span class="rounded-md bg-emerald-100 px-2 py-1 text-xs font-black text-emerald-700">Paid</span>';
+            if (status === 'failed') return '<span class="rounded-md bg-red-100 px-2 py-1 text-xs font-black text-red-600">Failed</span>';
+            return '<span class="rounded-md bg-gray-100 px-2 py-1 text-xs font-black text-gray-500">Pending</span>';
+        }
+
+        function renderRow(r) {
+            const amountCell = r.status === 'paid'
+                ? `${fmtPeso(r.amount_centavos)}<span class="block text-xs text-gray-400">of ${fmtPeso(r.total_price_centavos)} total</span>`
+                : `${fmtPeso(r.amount_centavos)} <span class="text-xs text-gray-400">(unpaid)</span>`;
+
+            return `
+                <tr class="align-top" data-q="${escapeHtml((r.full_name + ' ' + r.email).toLowerCase())}" data-offering="${escapeHtml(r.offering_slug)}" data-status="${r.status}">
+                    <td class="px-4 py-3 font-bold">${escapeHtml(r.full_name)}</td>
+                    <td class="px-4 py-3 text-gray-600">
+                        <div>${escapeHtml(r.email)}</div>
+                        ${r.phone ? `<div class="text-xs text-gray-400">${escapeHtml(r.phone)}</div>` : ''}
+                    </td>
+                    <td class="px-4 py-3">${escapeHtml(r.offering_slug)}</td>
+                    <td class="px-4 py-3">${escapeHtml(r.tier_label)}</td>
+                    <td class="px-4 py-3">${amountCell}</td>
+                    <td class="px-4 py-3">${statusBadge(r.status)}</td>
+                    <td class="px-4 py-3 text-gray-600">${fmtDate(r.paid_at || r.created_at)}</td>
+                </tr>`;
+        }
+
+        function renderStats(regs) {
+            const total = regs.length;
+            const paid = regs.filter((r) => r.status === 'paid');
+            const pending = regs.filter((r) => r.status === 'pending').length;
+            const totalRevenueCentavos = paid.reduce((sum, r) => sum + (r.amount_centavos || 0), 0);
+
+            const chip = (num, label) => `
+                <div class="rounded-xl border border-line bg-white p-5">
+                    <div class="text-2xl font-black tracking-tight">${num}</div>
+                    <div class="mt-1 text-xs font-bold uppercase tracking-wide text-gray-500">${label}</div>
+                </div>`;
+
+            document.getElementById('statChips').innerHTML =
+                chip(total, 'Total Registrations') +
+                chip(paid.length, 'Paid') +
+                chip(pending, 'Pending') +
+                chip(fmtPeso(totalRevenueCentavos), 'Revenue Collected');
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            const { ok, data } = await apiFetch('admin-bootcamp-registrations');
+            if (!ok) {
+                document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load registrations.';
+                return;
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            const regs = data.registrations;
+            renderStats(regs);
+            document.getElementById('regsBody').innerHTML = regs.map(renderRow).join('');
+
+            const offeringFilter = document.getElementById('offeringFilter');
+            const offerings = [...new Set(regs.map((r) => r.offering_slug))].sort();
+            offeringFilter.innerHTML = '<option value="">All offerings</option>' +
+                offerings.map((o) => `<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+
+            const searchInput = document.getElementById('searchInput');
+            const paidOnlyFilter = document.getElementById('paidOnlyFilter');
+            function applyFilter() {
+                const q = searchInput.value.trim().toLowerCase();
+                const offering = offeringFilter.value;
+                const paidOnly = paidOnlyFilter.checked;
+                let visibleCount = 0;
+                document.querySelectorAll('#regsBody tr').forEach((row) => {
+                    const matchesSearch = !q || row.dataset.q.includes(q);
+                    const matchesOffering = !offering || row.dataset.offering === offering;
+                    const matchesPaid = !paidOnly || row.dataset.status === 'paid';
+                    const show = matchesSearch && matchesOffering && matchesPaid;
+                    row.style.display = show ? '' : 'none';
+                    if (show) visibleCount += 1;
+                });
+                document.getElementById('emptyState').classList.toggle('hidden', visibleCount > 0);
+            }
+            searchInput.addEventListener('input', applyFilter);
+            offeringFilter.addEventListener('change', applyFilter);
+            paidOnlyFilter.addEventListener('change', applyFilter);
+        })();
+    </script>
+</body>
+</html>

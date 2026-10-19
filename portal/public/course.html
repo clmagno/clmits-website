@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex">
     <title>Course | CL Magno I.T. Solutions</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
     <script>
         tailwind.config = {
             theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
@@ -188,7 +189,9 @@
                 completeBtn.textContent = active.completed ? 'Mark Incomplete' : 'Mark Complete';
 
                 if (active.reading_content) {
-                    document.getElementById('readingContent').innerHTML = active.reading_content;
+                    document.getElementById('readingContent').innerHTML = window.marked
+                        ? marked.parse(active.reading_content)
+                        : active.reading_content;
                     readingCard.classList.remove('hidden');
                 } else {
                     readingCard.classList.add('hidden');

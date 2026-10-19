@@ -44,7 +44,11 @@ async function createCheckoutSession({ amountCentavos, description, successUrl, 
                         quantity: 1
                     }
                 ],
-                payment_method_types: ['gcash', 'paymaya', 'card'],
+                // qrph included so checkout still works while GCash/card are
+                // pending business verification -- PayMongo only shows
+                // whichever of these are actually active on the account, so
+                // this list can stay as-is once the others get approved too.
+                payment_method_types: ['gcash', 'paymaya', 'card', 'qrph'],
                 description,
                 success_url: successUrl,
                 cancel_url: cancelUrl,

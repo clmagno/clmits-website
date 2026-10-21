@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Cohorts | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+            <a href="../dashboard.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Your Courses
+            </a>
+            <div class="flex items-center gap-4">
+                <a href="students.html" class="text-sm font-bold hover:text-signal">Students</a>
+                <a href="bootcamp-registrations.html" class="text-sm font-bold hover:text-signal">Registrations</a>
+                <a href="courses.html" class="text-sm font-bold hover:text-signal">Manage Content</a>
+                <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-6xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight">Cohorts</h1>
+                    <p class="mt-2 text-sm text-gray-600">Scheduled batches of a live bootcamp. Register attendees who paid via Facebook or in person &mdash; they get a portal account and the welcome email automatically.</p>
+                </div>
+                <button type="button" id="newCohortBtn" class="shrink-0 rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">+ New Cohort</button>
+            </div>
+
+            <div id="googleBanner" class="mt-6 hidden rounded-xl border p-5"></div>
+
+            <div id="newCohortForm" class="mt-6 hidden"></div>
+
+            <div id="cohortList" class="mt-8 space-y-5"></div>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+        function fmtDate(ymd) {
+            if (!ymd) return '—';
+            const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function scheduleLabel(scheduleType) {
+            return scheduleType === 'weekend' ? 'Saturdays, 4:00–7:00 PM' : 'Tue/Wed/Fri, 7:00 PM';
+        }
+
+        let courses = [];
+        let googleConnected = false;
+
+        function cohortFormHtml() {
+            const courseOptions = courses.map((c) => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+            return `
+                <form id="cohortForm" class="rounded-xl border border-line bg-white p-6">
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Course</label>
+                            <select name="courseId" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">${courseOptions}</select>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Cohort Name</label>
+                            <input name="name" required placeholder="e.g. December 2026" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Schedule</label>
+                            <select name="scheduleType" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                                <option value="weekend">Weekend — Saturdays, 4:00–7:00 PM</option>
+                                <option value="weekday">Weekday — Tue/Wed/Fri, 7:00 PM</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">First Class Date</label>
+                            <input type="date" name="startDate" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                            <p class="mt-1 text-xs text-gray-500">Must match the schedule: a Saturday for weekend, or Tue/Wed/Fri for weekday.</p>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Duration (weeks)</label>
+                            <input type="number" name="durationWeeks" min="1" value="12" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Drive Folder (recordings &amp; resources)</label>
+                            <input name="driveFolderUrl" placeholder="https://drive.google.com/drive/folders/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                    </div>
+
+                    <div class="mt-4" id="meetLinkSection">
+                        ${googleConnected ? `
+                            <label class="flex items-center gap-2 text-sm">
+                                <input type="checkbox" name="autoCreateMeet" checked class="h-4 w-4">
+                                Auto-create a recurring Google Meet link for this cohort
+                            </label>
+                        ` : ''}
+                        <div class="mt-2" id="manualMeetField">
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Meet Link ${googleConnected ? '(used if auto-create is off)' : ''}</label>
+                            <input name="meetLink" placeholder="https://meet.google.com/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex items-center gap-3">
+                        <button type="submit" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Create Cohort</button>
+                        <button type="button" id="cancelCohortBtn" class="rounded-lg border border-line bg-white px-5 py-2.5 text-sm font-bold hover:bg-gray-50">Cancel</button>
+                        <p id="cohortFormError" class="hidden text-sm font-bold text-red-600"></p>
+                    </div>
+                </form>`;
+        }
+
+        function registerFormHtml(cohortId) {
+            return `
+                <form data-register-form data-cohort-id="${cohortId}" class="mt-3 grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-3">
+                    <input name="fullName" placeholder="Full name" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <input name="email" type="email" placeholder="Email" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <input name="phone" placeholder="Phone (optional)" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <div class="sm:col-span-3 flex items-center gap-3">
+                        <button type="submit" class="rounded-lg bg-ink px-4 py-2 text-xs font-black text-white hover:brightness-110">Register Attendee</button>
+                        <p data-register-result class="text-xs font-bold"></p>
+                    </div>
+                </form>`;
+        }
+
+        function renderRoster(roster, cohortId) {
+            if (!roster.length) {
+                return '<p class="text-sm text-gray-500">No attendees registered yet.</p>';
+            }
+            const rows = roster.map((r) => `
+                <tr>
+                    <td class="px-3 py-2 font-bold">${escapeHtml(r.full_name || '(no name)')}</td>
+                    <td class="px-3 py-2 text-gray-600">${escapeHtml(r.email)}</td>
+                    <td class="px-3 py-2 text-gray-600">${escapeHtml(r.phone || '—')}</td>
+                    <td class="px-3 py-2">${r.status === 'active' ? '<span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Active</span>' : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">Removed</span>'}</td>
+                    <td class="px-3 py-2"><a href="student-comments.html?userId=${r.user_id}" class="text-xs font-bold text-signal hover:underline">Comments</a></td>
+                    <td class="px-3 py-2"><button type="button" data-resend data-user-id="${r.user_id}" data-cohort-id="${cohortId}" class="text-xs font-bold text-signal hover:underline">Resend Welcome</button></td>
+                </tr>`).join('');
+            return `
+                <table class="w-full text-left text-sm">
+                    <thead class="text-xs font-black uppercase text-gray-500"><tr><th class="px-3 py-1">Name</th><th class="px-3 py-1">Email</th><th class="px-3 py-1">Phone</th><th class="px-3 py-1">Status</th><th class="px-3 py-1"></th><th class="px-3 py-1"></th></tr></thead>
+                    <tbody class="divide-y divide-line">${rows}</tbody>
+                </table>`;
+        }
+
+        function cohortCardHtml(c) {
+            return `
+                <article class="rounded-xl border border-line bg-white p-6" data-cohort-card="${c.id}">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-gray-500">${escapeHtml(c.course_title)}</p>
+                            <h3 class="text-xl font-black tracking-tight">${escapeHtml(c.name)}</h3>
+                            <p class="mt-1 text-sm text-gray-600">${scheduleLabel(c.schedule_type)} &middot; Starts ${fmtDate(c.start_date)} &middot; ${c.duration_weeks} weeks</p>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">${c.active_count} enrolled</span>
+                            <button type="button" data-action="toggle-roster" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Roster</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                        ${c.meet_link ? `<a href="${escapeAttr(c.meet_link)}" target="_blank" rel="noopener" class="font-bold text-signal hover:underline">Meet Link →</a>` : '<span class="text-gray-400">No Meet link set</span>'}
+                        ${c.drive_folder_url ? `<a href="${escapeAttr(c.drive_folder_url)}" target="_blank" rel="noopener" class="font-bold text-signal hover:underline">Drive Folder →</a>` : '<span class="text-gray-400">No Drive folder set</span>'}
+                    </div>
+
+                    <div data-role="rosterSlot" class="mt-4 hidden"></div>
+                </article>`;
+        }
+
+        async function loadCohortDetail(cohortId, slot) {
+            slot.innerHTML = '<p class="text-sm text-gray-500">Loading roster...</p>';
+            const { ok, data } = await apiFetch(`admin-cohorts?id=${encodeURIComponent(cohortId)}`);
+            if (!ok) {
+                slot.innerHTML = `<p class="text-sm font-bold text-red-600">${escapeHtml((data && data.error) || 'Could not load roster.')}</p>`;
+                return;
+            }
+            slot.innerHTML = renderRoster(data.roster, cohortId) + registerFormHtml(cohortId);
+
+            slot.querySelector('[data-register-form]').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const resultEl = form.querySelector('[data-register-result]');
+                resultEl.textContent = 'Registering…';
+                resultEl.className = 'text-xs font-bold text-gray-500';
+                const { ok: rOk, data: rData } = await apiFetch('admin-register-attendee', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        fullName: form.fullName.value,
+                        email: form.email.value,
+                        phone: form.phone.value,
+                        cohortId
+                    })
+                });
+                if (!rOk) {
+                    resultEl.textContent = (rData && rData.error) || 'Could not register this attendee.';
+                    resultEl.className = 'text-xs font-bold text-red-600';
+                    return;
+                }
+                if (!rData.emailSent) {
+                    resultEl.textContent = rData.tempPassword
+                        ? `Registered, but the email failed to send. Temp password: ${rData.tempPassword} — share this manually.`
+                        : 'Registered, but the email failed to send.';
+                    resultEl.className = 'text-xs font-bold text-amber-600';
+                } else {
+                    resultEl.textContent = 'Registered and welcome email sent.';
+                    resultEl.className = 'text-xs font-bold text-emerald-600';
+                }
+                loadCohortDetail(cohortId, slot);
+            });
+
+            slot.querySelectorAll('[data-resend]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    btn.textContent = 'Sending…';
+                    const { ok: sOk, data: sData } = await apiFetch('admin-resend-welcome', {
+                        method: 'POST',
+                        body: JSON.stringify({ userId: btn.dataset.userId, cohortId: btn.dataset.cohortId })
+                    });
+                    btn.disabled = false;
+                    btn.textContent = sOk && sData.emailSent ? 'Sent ✓' : 'Resend Welcome';
+                    if (sOk && !sData.emailSent && sData.tempPassword) {
+                        alert(`Email failed to send. New temp password: ${sData.tempPassword}`);
+                    }
+                });
+            });
+        }
+
+        function renderCohorts(cohorts) {
+            const listEl = document.getElementById('cohortList');
+            if (!cohorts.length) {
+                listEl.innerHTML = '<p class="text-sm text-gray-500">No cohorts yet. Click "+ New Cohort" above.</p>';
+                return;
+            }
+            listEl.innerHTML = cohorts.map(cohortCardHtml).join('');
+            listEl.querySelectorAll('[data-cohort-card]').forEach((card) => {
+                const cohortId = card.dataset.cohortCard;
+                const slot = card.querySelector('[data-role="rosterSlot"]');
+                card.querySelector('[data-action="toggle-roster"]').addEventListener('click', () => {
+                    const hidden = slot.classList.contains('hidden');
+                    slot.classList.toggle('hidden');
+                    if (hidden && !slot.innerHTML.trim()) loadCohortDetail(cohortId, slot);
+                });
+            });
+        }
+
+        async function loadCohortList() {
+            const { ok, data } = await apiFetch('admin-cohorts');
+            if (!ok) {
+                document.getElementById('cohortList').innerHTML = `<p class="text-sm font-bold text-red-600">${escapeHtml((data && data.error) || 'Could not load cohorts.')}</p>`;
+                return;
+            }
+            googleConnected = data.googleConnected;
+            const banner = document.getElementById('googleBanner');
+            if (googleConnected) {
+                banner.className = 'mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5';
+                banner.innerHTML = `<p class="text-sm font-bold text-emerald-700">Google Calendar connected (${escapeHtml(data.googleEmail || '')}). New cohorts can auto-create a Meet link.</p>`;
+            } else {
+                banner.className = 'mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5';
+                banner.innerHTML = `<p class="text-sm font-bold text-amber-800">Google Calendar isn't connected. <a href="/.netlify/functions/admin-google-auth-start" class="underline">Connect Google Calendar</a> to auto-create Meet links, or just paste a link manually per cohort below.</p>`;
+            }
+            banner.classList.remove('hidden');
+            renderCohorts(data.cohorts);
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            const { ok: coursesOk, data: coursesData } = await apiFetch('admin-courses');
+            if (coursesOk) {
+                courses = (coursesData.courses || []).filter((c) => c.is_catalog_only);
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            await loadCohortList();
+
+            const newCohortForm = document.getElementById('newCohortForm');
+            document.getElementById('newCohortBtn').addEventListener('click', () => {
+                if (newCohortForm.innerHTML) {
+                    newCohortForm.innerHTML = '';
+                    newCohortForm.classList.add('hidden');
+                    return;
+                }
+                if (!courses.length) {
+                    alert('No live-bootcamp courses found to attach a cohort to.');
+                    return;
+                }
+                newCohortForm.innerHTML = cohortFormHtml();
+                newCohortForm.classList.remove('hidden');
+
+                document.getElementById('cancelCohortBtn').addEventListener('click', () => {
+                    newCohortForm.innerHTML = '';
+                    newCohortForm.classList.add('hidden');
+                });
+
+                document.getElementById('cohortForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const form = e.target;
+                    const errorEl = document.getElementById('cohortFormError');
+                    errorEl.classList.add('hidden');
+
+                    const { ok, data } = await apiFetch('admin-cohorts', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            courseId: form.courseId.value,
+                            name: form.name.value,
+                            scheduleType: form.scheduleType.value,
+                            startDate: form.startDate.value,
+                            durationWeeks: form.durationWeeks.value,
+                            driveFolderUrl: form.driveFolderUrl.value,
+                            meetLink: form.meetLink.value,
+                            autoCreateMeet: form.autoCreateMeet ? form.autoCreateMeet.checked : false
+                        })
+                    });
+
+                    if (!ok) {
+                        errorEl.textContent = (data && data.error) || 'Could not create the cohort.';
+                        errorEl.classList.remove('hidden');
+                        return;
+                    }
+
+                    newCohortForm.innerHTML = '';
+                    newCohortForm.classList.add('hidden');
+                    await loadCohortList();
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

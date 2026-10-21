@@ -1,7 +1,8 @@
-// Lightweight Markdown toolbar + Write/Preview toggle for the companion-reading
-// field in the admin module editor. Needs marked.js loaded globally (`marked`).
+// Lightweight Markdown toolbar + Write/Preview toggle, reused across the
+// admin module editor (reading content) and the course editor (lesson
+// plan). Needs marked.js loaded globally (`marked`).
 // Expects a container with:
-//   textarea[data-field="readingContent"]
+//   a textarea matching fieldSelector (defaults to [data-field="readingContent"])
 //   button[data-md-action] inside [data-md-toolbar]
 //   button[data-md-tab="write"] / button[data-md-tab="preview"]
 //   [data-md-preview] element to render the rendered HTML into
@@ -57,8 +58,8 @@ const MD_ACTIONS = {
     link: mdInsertLink
 };
 
-function initMarkdownEditor(container) {
-    const textarea = container.querySelector('[data-field="readingContent"]');
+function initMarkdownEditor(container, fieldSelector) {
+    const textarea = container.querySelector(fieldSelector || '[data-field="readingContent"]');
     const preview = container.querySelector('[data-md-preview]');
     const writeTab = container.querySelector('[data-md-tab="write"]');
     const previewTab = container.querySelector('[data-md-tab="preview"]');

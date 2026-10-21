@@ -32,12 +32,43 @@ exports.handler = async (event) => {
         order by c.title
     `;
 
+    // Don't advertise "Reserve your slot" for a bootcamp the learner is
+    // already actively enrolled in via a cohort.
     const offerings = await sql`
         select c.slug, c.title, c.description, c.inquiry_interest
         from courses c
         where c.is_catalog_only = true
+        and not exists (
+            select 1 from cohort_enrollments ce
+            join cohorts co on co.id = ce.cohort_id
+            where co.course_id = c.id and ce.user_id = ${sessionUser.id} and ce.status = 'active'
+        )
         order by c.title
     `;
+
+    const [cohortRow] = await sql`
+        select co.id, co.name, co.schedule_type, co.start_date, co.duration_weeks,
+               co.meet_link, co.drive_folder_url,
+               c.title as course_title, c.slug as course_slug, c.lesson_plan
+        from cohort_enrollments ce
+        join cohorts co on co.id = ce.cohort_id
+        join courses c on c.id = co.course_id
+        where ce.user_id = ${sessionUser.id} and ce.status = 'active'
+        order by co.start_date desc
+        limit 1
+    `;
+
+    const cohort = cohortRow ? {
+        name: cohortRow.name,
+        courseTitle: cohortRow.course_title,
+        courseSlug: cohortRow.course_slug,
+        scheduleType: cohortRow.schedule_type,
+        startDate: cohortRow.start_date,
+        durationWeeks: cohortRow.duration_weeks,
+        meetLink: cohortRow.meet_link,
+        driveFolderUrl: cohortRow.drive_folder_url,
+        lessonPlan: cohortRow.lesson_plan
+    } : null;
 
     return {
         statusCode: 200,
@@ -48,7 +79,8 @@ exports.handler = async (event) => {
             canManageContent: role === 'admin' || role === 'instructor',
             subscription: { active, until: me ? me.subscription_until : null },
             courses,
-            offerings
+            offerings,
+            cohort
         })
     };
 };

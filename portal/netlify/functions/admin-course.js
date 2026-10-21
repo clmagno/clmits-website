@@ -16,7 +16,7 @@ exports.handler = async (event) => {
     }
 
     const [course] = await sql`
-        select id, slug, title, description, requires_subscription, is_catalog_only
+        select id, slug, title, description, requires_subscription, is_catalog_only, lesson_plan, setup_guide_url
         from courses where slug = ${slug}
     `;
     if (!course) {
@@ -54,7 +54,9 @@ exports.handler = async (event) => {
             update courses set
                 title = ${title},
                 description = ${String(body.description || '').trim()},
-                requires_subscription = ${Boolean(body.requiresSubscription)}
+                requires_subscription = ${Boolean(body.requiresSubscription)},
+                lesson_plan = ${body.lessonPlan ? String(body.lessonPlan) : null},
+                setup_guide_url = ${body.setupGuideUrl ? String(body.setupGuideUrl).trim() : null}
             where id = ${course.id}
         `;
         return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };

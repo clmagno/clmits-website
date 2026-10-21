@@ -52,6 +52,41 @@
                     <input type="checkbox" name="requiresSubscription" class="h-4 w-4">
                     Requires an active subscription
                 </label>
+
+                <div class="mt-4">
+                    <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Pre-Work Setup Guide URL</label>
+                    <input name="setupGuideUrl" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink" placeholder="https://docs.google.com/document/d/...">
+                    <p class="mt-1 text-xs text-gray-500">Linked in the welcome email sent when someone is registered into a live cohort of this course.</p>
+                </div>
+
+                <div class="mt-4" id="lessonPlanField">
+                    <div class="mb-1 flex items-center justify-between">
+                        <label class="block text-xs font-black uppercase tracking-wide text-gray-500">Lesson Plan (Markdown, optional)</label>
+                        <div class="flex overflow-hidden rounded-lg border border-gray-300 text-xs font-black">
+                            <button type="button" data-md-tab="write" class="bg-ink px-3 py-1 text-white">Write</button>
+                            <button type="button" data-md-tab="preview" class="px-3 py-1 text-gray-600">Preview</button>
+                        </div>
+                    </div>
+                    <div data-md-toolbar class="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-gray-300 bg-gray-50 p-1.5">
+                        <button type="button" data-md-action="h2" title="Heading" class="rounded px-2 py-1 text-xs font-black hover:bg-white">H2</button>
+                        <button type="button" data-md-action="h3" title="Subheading" class="rounded px-2 py-1 text-xs font-black hover:bg-white">H3</button>
+                        <span class="mx-1 w-px bg-gray-300"></span>
+                        <button type="button" data-md-action="bold" title="Bold" class="rounded px-2 py-1 text-xs font-black hover:bg-white">B</button>
+                        <button type="button" data-md-action="italic" title="Italic" class="rounded px-2 py-1 text-xs italic hover:bg-white">I</button>
+                        <span class="mx-1 w-px bg-gray-300"></span>
+                        <button type="button" data-md-action="ul" title="Bullet list" class="rounded px-2 py-1 text-xs font-black hover:bg-white">&bull; List</button>
+                        <button type="button" data-md-action="ol" title="Numbered list" class="rounded px-2 py-1 text-xs font-black hover:bg-white">1. List</button>
+                        <button type="button" data-md-action="quote" title="Quote" class="rounded px-2 py-1 text-xs font-black hover:bg-white">&ldquo;Quote&rdquo;</button>
+                        <span class="mx-1 w-px bg-gray-300"></span>
+                        <button type="button" data-md-action="code" title="Inline code" class="rounded px-2 py-1 font-mono text-xs hover:bg-white">code</button>
+                        <button type="button" data-md-action="codeblock" title="Code block" class="rounded px-2 py-1 font-mono text-xs hover:bg-white">{ }</button>
+                        <button type="button" data-md-action="link" title="Link" class="rounded px-2 py-1 text-xs font-black hover:bg-white">Link</button>
+                    </div>
+                    <textarea name="lessonPlan" rows="10" class="w-full rounded-b-lg border border-gray-300 px-3 py-2 font-mono text-xs leading-5 outline-none focus:border-ink" placeholder="## Week 1&#10;&#10;What gets covered week by week. Shown to enrolled learners on their dashboard."></textarea>
+                    <div data-md-preview class="prose prose-sm hidden max-w-none rounded-b-lg border border-gray-300 bg-white px-4 py-3 leading-7 text-gray-800"></div>
+                    <p class="mt-1 text-xs text-gray-500">Shown on a learner's dashboard once they're enrolled in a live cohort of this course.</p>
+                </div>
+
                 <div class="mt-5 flex items-center gap-3">
                     <button type="submit" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Save Course</button>
                     <p id="courseSaveStatus" class="hidden text-sm font-bold"></p>
@@ -278,7 +313,10 @@
             document.getElementById('courseForm').title.value = course.title;
             document.getElementById('courseForm').description.value = course.description || '';
             document.getElementById('courseForm').requiresSubscription.checked = course.requires_subscription;
+            document.getElementById('courseForm').setupGuideUrl.value = course.setup_guide_url || '';
+            document.getElementById('courseForm').lessonPlan.value = course.lesson_plan || '';
             document.getElementById('slugDisplay').value = course.slug;
+            initMarkdownEditor(document.getElementById('lessonPlanField'), '[name="lessonPlan"]');
 
             document.getElementById('courseForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -289,7 +327,9 @@
                     body: JSON.stringify({
                         title: form.title.value,
                         description: form.description.value,
-                        requiresSubscription: form.requiresSubscription.checked
+                        requiresSubscription: form.requiresSubscription.checked,
+                        setupGuideUrl: form.setupGuideUrl.value,
+                        lessonPlan: form.lessonPlan.value
                     })
                 });
                 statusEl.classList.remove('hidden');

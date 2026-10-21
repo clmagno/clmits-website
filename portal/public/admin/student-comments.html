@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Comments | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
+            <a href="cohorts.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                Cohorts
+            </a>
+            <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-3xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <h1 id="studentHeading" class="text-2xl font-black tracking-tight"></h1>
+            <p id="studentEmail" class="mt-1 text-sm text-gray-500"></p>
+
+            <div id="thread" class="mt-6 space-y-3"></div>
+
+            <form id="replyForm" class="mt-6 flex gap-3">
+                <textarea name="body" rows="2" required placeholder="Write a reply..." class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink"></textarea>
+                <button type="submit" class="shrink-0 rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Send</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        const userId = new URLSearchParams(window.location.search).get('userId');
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtDateTime(iso) {
+            return new Date(iso).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+
+        function renderThread(comments) {
+            if (!comments.length) {
+                return '<p class="text-sm text-gray-500">No messages yet.</p>';
+            }
+            return comments.map((c) => {
+                const fromAdmin = c.author_role === 'admin' || c.author_role === 'instructor';
+                return `
+                    <div class="rounded-lg border p-4 ${fromAdmin ? 'border-signal/30 bg-signal/5' : 'border-line bg-white'}">
+                        <div class="flex items-center justify-between text-xs font-bold text-gray-500">
+                            <span>${fromAdmin ? 'You' : 'Student'}</span>
+                            <span>${fmtDateTime(c.created_at)}</span>
+                        </div>
+                        <p class="mt-1 whitespace-pre-wrap text-sm">${escapeHtml(c.body)}</p>
+                    </div>`;
+            }).join('');
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            if (!userId) {
+                document.getElementById('loadingState').textContent = 'No student specified.';
+                return;
+            }
+
+            async function load() {
+                const { ok, data } = await apiFetch(`admin-comments?userId=${encodeURIComponent(userId)}`);
+                if (!ok) {
+                    document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load this thread.';
+                    return null;
+                }
+                return data;
+            }
+
+            const data = await load();
+            if (!data) return;
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+            document.getElementById('studentHeading').textContent = data.student.full_name || '(no name)';
+            document.getElementById('studentEmail').textContent = data.student.email;
+            document.getElementById('thread').innerHTML = renderThread(data.comments);
+
+            document.getElementById('replyForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const text = form.body.value.trim();
+                if (!text) return;
+                const { ok } = await apiFetch('admin-comments', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId, body: text })
+                });
+                if (ok) {
+                    form.body.value = '';
+                    const fresh = await load();
+                    if (fresh) document.getElementById('thread').innerHTML = renderThread(fresh.comments);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

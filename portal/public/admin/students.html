@@ -24,6 +24,7 @@
             </a>
             <div class="flex items-center gap-4">
                 <a href="bootcamp-registrations.html" class="text-sm font-bold hover:text-signal">Registrations</a>
+                <a href="cohorts.html" class="text-sm font-bold hover:text-signal">Cohorts</a>
                 <a href="courses.html" class="text-sm font-bold hover:text-signal">Manage Content</a>
                 <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
             </div>
@@ -59,6 +60,7 @@
                             <th class="px-4 py-3">Progress</th>
                             <th class="px-4 py-3">Quiz Avg</th>
                             <th class="px-4 py-3">Payments</th>
+                            <th class="px-4 py-3">Comments</th>
                         </tr>
                     </thead>
                     <tbody id="studentsBody" class="divide-y divide-line"></tbody>
@@ -130,6 +132,7 @@
                     <td class="px-4 py-3">${renderProgress(student)}</td>
                     <td class="px-4 py-3">${quizCell}</td>
                     <td class="px-4 py-3">${paymentsCell}</td>
+                    <td class="px-4 py-3"><a href="student-comments.html?userId=${student.id}" class="text-xs font-bold text-signal hover:underline">Comments</a></td>
                 </tr>`;
         }
 

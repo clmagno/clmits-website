@@ -5,12 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
     <title>Your Courses | CL Magno I.T. Solutions</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
         tailwind.config = {
             theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
         }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
     <style>
         body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     </style>
@@ -22,7 +23,9 @@
             <div class="flex items-center gap-4">
                 <a id="studentsLink" href="admin/students.html" class="hidden text-sm font-bold hover:text-signal">Students</a>
                 <a id="registrationsLink" href="admin/bootcamp-registrations.html" class="hidden text-sm font-bold hover:text-signal">Registrations</a>
+                <a id="cohortsLink" href="admin/cohorts.html" class="hidden text-sm font-bold hover:text-signal">Cohorts</a>
                 <a id="adminLink" href="admin/courses.html" class="hidden rounded-lg bg-ink px-4 py-2 text-sm font-black text-white hover:-translate-y-0.5">Manage Content</a>
+                <a href="account.html" class="text-sm font-bold hover:text-signal">Account</a>
                 <span id="userEmail" class="text-sm text-gray-600"></span>
                 <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
             </div>
@@ -30,7 +33,38 @@
     </nav>
 
     <main class="mx-auto max-w-5xl px-5 py-12">
-        <h1 class="text-3xl font-black tracking-tight">Your Courses</h1>
+        <div id="cohortSection" class="mb-14 hidden">
+            <span class="rounded-md bg-ink px-3 py-1 text-[11px] font-black text-white">Live Training</span>
+            <h1 id="cohortCourseTitle" class="mt-3 text-3xl font-black tracking-tight"></h1>
+            <p id="cohortName" class="mt-1 text-sm text-gray-600"></p>
+
+            <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+                <div class="space-y-6">
+                    <div class="rounded-xl border border-ink bg-ink p-6 text-white">
+                        <p class="text-xs font-bold uppercase tracking-wide text-white/50">Schedule</p>
+                        <p id="cohortSchedule" class="mt-1 text-lg font-black"></p>
+                        <div class="mt-5 flex flex-wrap gap-3">
+                            <a id="cohortMeetLink" href="#" target="_blank" rel="noopener" class="hidden rounded-lg bg-white px-5 py-2.5 text-sm font-black text-ink transition hover:-translate-y-0.5">Join Class &rarr;</a>
+                            <a id="cohortDriveLink" href="#" target="_blank" rel="noopener" class="hidden rounded-lg border border-white/30 px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">Recordings &amp; Resources &rarr;</a>
+                        </div>
+                    </div>
+
+                    <div id="cohortLessonPlan" class="prose prose-sm hidden max-w-none rounded-xl border border-line bg-white p-6"></div>
+                </div>
+
+                <aside class="rounded-xl border border-line bg-white p-5">
+                    <h3 class="font-black">Comments</h3>
+                    <p class="mt-1 text-xs text-gray-500">Private between you and the admin.</p>
+                    <div id="commentsThread" class="mt-4 max-h-80 space-y-2 overflow-y-auto"></div>
+                    <form id="commentForm" class="mt-4 space-y-2">
+                        <textarea name="body" rows="2" placeholder="Ask a question or leave a note..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink"></textarea>
+                        <button type="submit" class="w-full rounded-lg bg-ink px-4 py-2 text-xs font-black text-white hover:brightness-110">Send</button>
+                    </form>
+                </aside>
+            </div>
+        </div>
+
+        <h2 class="text-3xl font-black tracking-tight">Your Courses</h2>
         <p class="mt-2 text-sm text-gray-600">Module 1 of every course is free. A subscription unlocks the rest, plus readings and quizzes.</p>
 
         <div id="subscriptionBanner" class="mt-6 rounded-xl border p-6"></div>
@@ -46,6 +80,76 @@
 
     <script src="js/portal.js"></script>
     <script>
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtDateYMD(ymd) {
+            if (!ymd) return '';
+            const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        function cohortScheduleLabel(scheduleType) {
+            return scheduleType === 'weekend' ? 'Saturdays, 4:00–7:00 PM' : 'Tue/Wed/Fri, 7:00 PM';
+        }
+
+        function renderCohortSection(cohort) {
+            if (!cohort) return;
+            document.getElementById('cohortSection').classList.remove('hidden');
+            document.getElementById('cohortCourseTitle').textContent = cohort.courseTitle;
+            document.getElementById('cohortName').textContent = cohort.name;
+            document.getElementById('cohortSchedule').textContent =
+                `${cohortScheduleLabel(cohort.scheduleType)} · Starts ${fmtDateYMD(cohort.startDate)} · ${cohort.durationWeeks} weeks`;
+
+            if (cohort.meetLink) {
+                const meetBtn = document.getElementById('cohortMeetLink');
+                meetBtn.href = cohort.meetLink;
+                meetBtn.classList.remove('hidden');
+            }
+            if (cohort.driveFolderUrl) {
+                const driveBtn = document.getElementById('cohortDriveLink');
+                driveBtn.href = cohort.driveFolderUrl;
+                driveBtn.classList.remove('hidden');
+            }
+            if (cohort.lessonPlan) {
+                const lp = document.getElementById('cohortLessonPlan');
+                lp.innerHTML = window.marked ? marked.parse(cohort.lessonPlan) : cohort.lessonPlan;
+                lp.classList.remove('hidden');
+            }
+
+            async function loadComments() {
+                const { ok, data } = await apiFetch('comments');
+                if (!ok) return;
+                const el = document.getElementById('commentsThread');
+                if (!data.comments.length) {
+                    el.innerHTML = '<p class="text-xs text-gray-400">No messages yet.</p>';
+                    return;
+                }
+                el.innerHTML = data.comments.map((c) => {
+                    const fromAdmin = c.author_role === 'admin' || c.author_role === 'instructor';
+                    return `
+                        <div class="rounded-lg border p-2 text-xs ${fromAdmin ? 'border-signal/30 bg-signal/5' : 'border-line bg-paper'}">
+                            <p class="font-bold text-gray-500">${fromAdmin ? 'Admin' : 'You'} &middot; ${new Date(c.created_at).toLocaleDateString()}</p>
+                            <p class="mt-1 whitespace-pre-wrap">${escapeHtml(c.body)}</p>
+                        </div>`;
+                }).join('');
+                el.scrollTop = el.scrollHeight;
+            }
+
+            document.getElementById('commentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const form = e.target;
+                const text = form.body.value.trim();
+                if (!text) return;
+                const { ok } = await apiFetch('comments', { method: 'POST', body: JSON.stringify({ body: text }) });
+                if (ok) {
+                    form.body.value = '';
+                    loadComments();
+                }
+            });
+
+            loadComments();
+        }
+
         function statusLabel(course) {
             if (course.total_modules === 0) return { text: 'No modules yet', color: 'text-gray-500' };
             if (course.completed_modules === 0) return { text: 'Not Started', color: 'text-gray-500' };
@@ -114,8 +218,10 @@
             if (session.role === 'admin') {
                 document.getElementById('studentsLink').classList.remove('hidden');
                 document.getElementById('registrationsLink').classList.remove('hidden');
+                document.getElementById('cohortsLink').classList.remove('hidden');
             }
             renderSubscriptionBanner(session.subscription);
+            renderCohortSection(session.cohort);
 
             const list = document.getElementById('courseList');
             if (!session.courses.length) {

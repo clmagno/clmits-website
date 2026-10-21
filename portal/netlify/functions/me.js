@@ -75,6 +75,7 @@ exports.handler = async (event) => {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+            id: sessionUser.id,
             email: sessionUser.email,
             role,
             mustChangePassword: Boolean(me && me.must_change_password),

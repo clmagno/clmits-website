@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Manage Users | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <div class="flex min-h-screen">
+        <aside class="hidden w-60 shrink-0 flex-col justify-between border-r border-line bg-white md:flex">
+            <div>
+                <div class="flex h-16 items-center border-b border-line px-6">
+                    <a href="overview.html" class="text-sm font-black tracking-tight">CL Magno I.T. Solutions</a>
+                </div>
+                <nav class="space-y-1 p-4 text-sm font-bold">
+                    <a href="overview.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Overview</a>
+                    <a href="students.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Students</a>
+                    <a href="bootcamp-registrations.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Registrations</a>
+                    <a href="cohorts.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Cohorts</a>
+                    <a href="courses.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Contents</a>
+                    <div class="pt-1">
+                        <button type="button" id="accountsToggle" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-ink bg-paper">
+                            <span>Accounts</span>
+                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="accountsSubmenu" class="mt-1 space-y-1 border-l border-line pl-3">
+                            <a href="../account.html" class="block rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:text-ink">Change Password</a>
+                            <a href="users.html" class="block rounded-lg px-3 py-1.5 text-xs font-bold text-signal">Manage Users</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="border-t border-line p-4">
+                <p id="userEmail" class="truncate text-xs font-bold text-gray-500"></p>
+                <div class="mt-3 flex gap-2">
+                    <a href="../dashboard.html?stay=1" class="flex-1 rounded-lg border border-line px-2 py-2 text-center text-xs font-bold hover:bg-gray-50">Your Courses</a>
+                    <button id="logoutBtn" class="flex-1 rounded-lg border border-line px-2 py-2 text-xs font-bold hover:bg-gray-50">Sign Out</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="min-w-0 flex-1">
+            <div class="flex h-14 items-center justify-between border-b border-line bg-white px-4 md:hidden">
+                <span class="text-sm font-black">CL Magno I.T. Solutions</span>
+                <button type="button" id="mobileMenuToggle" class="rounded-lg border border-line px-3 py-1.5 text-xs font-bold">Menu</button>
+            </div>
+            <div id="mobileMenuPanel" class="hidden flex-col gap-1 border-b border-line bg-white px-4 py-3 text-sm font-bold md:hidden">
+                <a href="overview.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Overview</a>
+                <a href="students.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Students</a>
+                <a href="bootcamp-registrations.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Registrations</a>
+                <a href="cohorts.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Cohorts</a>
+                <a href="courses.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Contents</a>
+                <a href="../account.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Change Password</a>
+                <a href="users.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Manage Users</a>
+                <a href="../dashboard.html?stay=1" class="rounded-lg px-2 py-1.5 hover:bg-paper">Your Courses</a>
+                <button type="button" id="logoutBtnMobile" class="rounded-lg px-2 py-1.5 text-left hover:bg-paper">Sign Out</button>
+            </div>
+
+            <main class="mx-auto max-w-5xl px-5 py-12">
+                <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+                <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+                <div id="pageState" class="hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl font-black tracking-tight">Manage Users</h1>
+                            <p class="mt-2 text-sm text-gray-600">Add staff/admin accounts, change roles, reset passwords, or remove accounts.</p>
+                        </div>
+                        <button type="button" id="addUserBtn" class="shrink-0 rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">+ Add User</button>
+                    </div>
+
+                    <div id="addUserForm" class="mt-6 hidden"></div>
+
+                    <div class="mt-8 overflow-x-auto rounded-xl border border-line bg-white">
+                        <table class="w-full text-left text-sm">
+                            <thead class="border-b border-line bg-paper text-xs font-black uppercase tracking-wide text-gray-500">
+                                <tr>
+                                    <th class="px-4 py-3">Name</th>
+                                    <th class="px-4 py-3">Email</th>
+                                    <th class="px-4 py-3">Role</th>
+                                    <th class="px-4 py-3">Signed Up</th>
+                                    <th class="px-4 py-3"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersBody" class="divide-y divide-line"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+        function fmtDate(iso) {
+            return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function roleBadge(role) {
+            if (role === 'admin') return '<span class="rounded-md bg-ink px-2 py-0.5 text-[11px] font-black text-white">Admin</span>';
+            if (role === 'instructor') return '<span class="rounded-md bg-signal/10 px-2 py-0.5 text-[11px] font-black text-signal">Instructor</span>';
+            return '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-600">Student</span>';
+        }
+
+        let currentUserId = null;
+        let users = [];
+
+        function addUserFormHtml() {
+            return `
+                <form id="newUserForm" class="grid gap-3 rounded-xl border border-line bg-white p-6 sm:grid-cols-4">
+                    <input name="fullName" placeholder="Full name" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <input name="email" type="email" placeholder="Email" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <select name="role" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        <option value="student">Student</option>
+                        <option value="instructor">Instructor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button type="submit" class="rounded-lg bg-ink px-4 py-2 text-sm font-black text-white hover:brightness-110">Create Account</button>
+                    <p data-new-user-result class="sm:col-span-4 text-xs font-bold"></p>
+                </form>`;
+        }
+
+        function editRowHtml(u) {
+            return `
+                <tr class="editRow hidden" data-edit-row="${u.id}">
+                    <td colspan="5" class="bg-paper px-4 py-3">
+                        <form data-edit-user-form data-user-id="${u.id}" class="grid gap-2 sm:grid-cols-5">
+                            <input name="fullName" value="${escapeAttr(u.full_name || '')}" placeholder="Full name" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                            <input name="email" type="email" value="${escapeAttr(u.email)}" placeholder="Email" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                            <select name="role" class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                                <option value="student" ${u.role === 'student' ? 'selected' : ''}>Student</option>
+                                <option value="instructor" ${u.role === 'instructor' ? 'selected' : ''}>Instructor</option>
+                                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                            </select>
+                            <label class="flex items-center gap-1.5 text-xs font-bold text-gray-600">
+                                <input type="checkbox" name="resetPassword" class="h-3.5 w-3.5"> Reset password
+                            </label>
+                            <div class="flex items-center gap-2">
+                                <button type="submit" class="rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white hover:brightness-110">Save</button>
+                                <button type="button" data-cancel-edit class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold hover:bg-gray-50">Cancel</button>
+                            </div>
+                            <p data-edit-user-result class="sm:col-span-5 text-xs font-bold"></p>
+                        </form>
+                    </td>
+                </tr>`;
+        }
+
+        function userRowHtml(u) {
+            const isSelf = u.id === currentUserId;
+            return `
+                <tr data-user-row="${u.id}">
+                    <td class="px-4 py-3 font-bold">${escapeHtml(u.full_name || '(no name)')}${isSelf ? ' <span class="text-xs font-normal text-gray-400">(you)</span>' : ''}</td>
+                    <td class="px-4 py-3 text-gray-600">${escapeHtml(u.email)}</td>
+                    <td class="px-4 py-3">${roleBadge(u.role)}</td>
+                    <td class="px-4 py-3 text-gray-600">${fmtDate(u.created_at)}</td>
+                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                        <button type="button" data-toggle-edit data-user-id="${u.id}" class="text-xs font-bold text-signal hover:underline">Edit</button>
+                        ${isSelf ? '' : `&middot; <button type="button" data-delete-user data-user-id="${u.id}" data-user-name="${escapeAttr(u.full_name || u.email)}" class="text-xs font-bold text-red-600 hover:underline">Delete</button>`}
+                    </td>
+                </tr>${editRowHtml(u)}`;
+        }
+
+        function renderUsers() {
+            document.getElementById('usersBody').innerHTML = users.map(userRowHtml).join('');
+
+            document.querySelectorAll('[data-toggle-edit]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    document.querySelector(`[data-edit-row="${btn.dataset.userId}"]`)?.classList.toggle('hidden');
+                });
+            });
+            document.querySelectorAll('[data-cancel-edit]').forEach((btn) => {
+                btn.addEventListener('click', () => btn.closest('tr.editRow').classList.add('hidden'));
+            });
+            document.querySelectorAll('[data-edit-user-form]').forEach((form) => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const resultEl = form.querySelector('[data-edit-user-result]');
+                    resultEl.textContent = 'Saving…';
+                    resultEl.className = 'sm:col-span-5 text-xs font-bold text-gray-500';
+                    const { ok, data } = await apiFetch('admin-manage-users', {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            id: form.dataset.userId,
+                            fullName: form.fullName.value,
+                            email: form.email.value,
+                            role: form.role.value,
+                            resetPassword: form.resetPassword.checked
+                        })
+                    });
+                    if (!ok) {
+                        resultEl.textContent = (data && data.error) || 'Could not save changes.';
+                        resultEl.className = 'sm:col-span-5 text-xs font-bold text-red-600';
+                        return;
+                    }
+                    if (data.tempPassword) {
+                        alert(`Password reset. New temp password: ${data.tempPassword}\n\nShare this with the user manually.`);
+                    }
+                    await loadUsers();
+                });
+            });
+            document.querySelectorAll('[data-delete-user]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm(`Delete "${btn.dataset.userName}"? This permanently removes their account and progress. This cannot be undone.`)) return;
+                    const { ok, data } = await apiFetch(`admin-manage-users?id=${encodeURIComponent(btn.dataset.userId)}`, { method: 'DELETE' });
+                    if (!ok) {
+                        alert((data && data.error) || 'Could not delete this user.');
+                        return;
+                    }
+                    await loadUsers();
+                });
+            });
+        }
+
+        async function loadUsers() {
+            const { ok, data } = await apiFetch('admin-manage-users');
+            if (!ok) {
+                document.getElementById('usersBody').innerHTML = `<tr><td colspan="5" class="px-4 py-6 text-center text-sm font-bold text-red-600">${escapeHtml((data && data.error) || 'Could not load users.')}</td></tr>`;
+                return;
+            }
+            users = data.users;
+            renderUsers();
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            currentUserId = session.id;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('logoutBtnMobile').addEventListener('click', logout);
+            document.getElementById('userEmail').textContent = session.email;
+            document.getElementById('accountsToggle').addEventListener('click', () => {
+                document.getElementById('accountsSubmenu').classList.toggle('hidden');
+            });
+            document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+                document.getElementById('mobileMenuPanel').classList.toggle('flex');
+                document.getElementById('mobileMenuPanel').classList.toggle('hidden');
+            });
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            await loadUsers();
+
+            const addForm = document.getElementById('addUserForm');
+            document.getElementById('addUserBtn').addEventListener('click', () => {
+                if (addForm.innerHTML) {
+                    addForm.innerHTML = '';
+                    addForm.classList.add('hidden');
+                    return;
+                }
+                addForm.innerHTML = addUserFormHtml();
+                addForm.classList.remove('hidden');
+                document.getElementById('newUserForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const form = e.target;
+                    const resultEl = form.querySelector('[data-new-user-result]');
+                    resultEl.textContent = 'Creating…';
+                    resultEl.className = 'sm:col-span-4 text-xs font-bold text-gray-500';
+                    const { ok, data } = await apiFetch('admin-manage-users', {
+                        method: 'POST',
+                        body: JSON.stringify({ fullName: form.fullName.value, email: form.email.value, role: form.role.value })
+                    });
+                    if (!ok) {
+                        resultEl.textContent = (data && data.error) || 'Could not create this user.';
+                        resultEl.className = 'sm:col-span-4 text-xs font-bold text-red-600';
+                        return;
+                    }
+                    alert(`Account created. Temp password: ${data.tempPassword}\n\nShare this with the user manually.`);
+                    addForm.innerHTML = '';
+                    addForm.classList.add('hidden');
+                    await loadUsers();
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

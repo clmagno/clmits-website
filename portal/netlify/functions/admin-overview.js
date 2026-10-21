@@ -16,10 +16,14 @@ exports.handler = async (event) => {
 
     const sql = getDb();
 
-    const [{ count: totalStudents }] = await sql`select count(*)::int as count from users`;
+    const [{ count: totalStudents }] = await sql`select count(*)::int as count from users where role = 'student'`;
     const [{ count: activeSubscriptions }] = await sql`
         select count(*)::int as count from users where subscription_until is not null and subscription_until > now()
     `;
+    const [{ count: selfPacedCourses }] = await sql`
+        select count(*)::int as count from courses where requires_subscription = true
+    `;
+    const [{ count: liveSessions }] = await sql`select count(*)::int as count from cohorts`;
     const [{ total: totalRegistrations, paid: paidRegistrations, pending: pendingRegistrations }] = await sql`
         select count(*)::int as total,
                count(*) filter (where status = 'paid')::int as paid,
@@ -37,6 +41,12 @@ exports.handler = async (event) => {
         select coalesce(sum(amount_centavos), 0)::int as total from payments where status = 'paid'
     `;
     const revenueCentavos = regRevenue + installmentRevenue + subRevenue;
+
+    // "Cost of earning" -- total contract value of every registration made
+    // (paid + still pending), i.e. what the business stands to earn in full.
+    const [{ total: potentialRevenueCentavos }] = await sql`
+        select coalesce(sum(total_price_centavos), 0)::int as total from bootcamp_registrations
+    `;
 
     const pending = await sql`
         select id, full_name, email, phone, offering_slug, tier, tier_label,
@@ -69,6 +79,7 @@ exports.handler = async (event) => {
     const signupTrendRows = await sql`
         select to_char(date_trunc('week', created_at), 'YYYY-MM-DD') as week, count(*)::int as count
         from users
+        where role = 'student'
         group by week
         order by week
     `;
@@ -86,10 +97,13 @@ exports.handler = async (event) => {
             stats: {
                 totalStudents,
                 activeSubscriptions,
+                selfPacedCourses,
+                liveSessions,
                 totalRegistrations,
                 paidRegistrations,
                 pendingRegistrations,
-                revenueCentavos
+                revenueCentavos,
+                potentialRevenueCentavos
             },
             pendingRegistrations: pending,
             upcomingCohorts,

@@ -101,7 +101,7 @@ function welcomeEmail({ fullName, email, tempPassword, courseTitle, cohort, port
             <p style="margin:0;">Email: ${escapeHtml(email)}</p>
             <p style="margin:0;">Temporary Password: <code>${escapeHtml(tempPassword)}</code></p>
             <p style="margin:8px 0 0 0;"><a href="${escapeHtml(portalUrl)}/login.html">${escapeHtml(portalUrl)}/login.html</a></p>
-            <p style="margin:8px 0 0 0;color:#555;">Please log in and change your password from your Account page.</p>
+            <p style="margin:8px 0 0 0;color:#b45309;font-weight:bold;">⚠️ This is a temporary password. Please log in and change it from your Account page as soon as possible.</p>
         </div>
 
         ${SIGNATURE_HTML}

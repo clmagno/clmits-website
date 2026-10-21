@@ -152,23 +152,61 @@
                 </form>`;
         }
 
+        function tierBadge(tier) {
+            return tier === 'early_bird'
+                ? '<span class="rounded-md bg-violet-100 px-2 py-0.5 text-[11px] font-black text-violet-700">Early Bird</span>'
+                : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-600">Standard</span>';
+        }
+        function statusBadge(status) {
+            return status === 'active'
+                ? '<span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Active</span>'
+                : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">Removed</span>';
+        }
+
+        function editRowHtml(r, cohortId) {
+            return `
+                <tr class="editRow hidden" data-edit-row="${r.user_id}">
+                    <td colspan="7" class="bg-paper px-3 py-3">
+                        <form data-edit-form data-user-id="${r.user_id}" data-cohort-id="${cohortId}" class="grid gap-2 sm:grid-cols-5">
+                            <input name="fullName" value="${escapeAttr(r.full_name || '')}" placeholder="Full name" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                            <input name="email" type="email" value="${escapeAttr(r.email)}" placeholder="Email" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                            <input name="phone" value="${escapeAttr(r.phone || '')}" placeholder="Phone" class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                            <select name="tier" class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                                <option value="early_bird" ${r.tier === 'early_bird' ? 'selected' : ''}>Early Bird</option>
+                                <option value="standard" ${r.tier === 'standard' ? 'selected' : ''}>Standard</option>
+                            </select>
+                            <select name="status" class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                                <option value="active" ${r.status === 'active' ? 'selected' : ''}>Active</option>
+                                <option value="removed" ${r.status === 'removed' ? 'selected' : ''}>Removed</option>
+                            </select>
+                            <div class="sm:col-span-5 flex items-center gap-3">
+                                <button type="submit" class="rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white hover:brightness-110">Save</button>
+                                <button type="button" data-cancel-edit class="rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold hover:bg-gray-50">Cancel</button>
+                                <p data-edit-result class="text-xs font-bold"></p>
+                            </div>
+                        </form>
+                    </td>
+                </tr>`;
+        }
+
         function renderRoster(roster, cohortId) {
             if (!roster.length) {
                 return '<p class="text-sm text-gray-500">No attendees registered yet.</p>';
             }
-            const tierBadge = (tier) => tier === 'early_bird'
-                ? '<span class="rounded-md bg-violet-100 px-2 py-0.5 text-[11px] font-black text-violet-700">Early Bird</span>'
-                : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-600">Standard</span>';
             const rows = roster.map((r) => `
-                <tr>
+                <tr data-roster-row="${r.user_id}">
                     <td class="px-3 py-2 font-bold">${escapeHtml(r.full_name || '(no name)')}</td>
                     <td class="px-3 py-2 text-gray-600">${escapeHtml(r.email)}</td>
                     <td class="px-3 py-2 text-gray-600">${escapeHtml(r.phone || '—')}</td>
                     <td class="px-3 py-2">${tierBadge(r.tier)}</td>
-                    <td class="px-3 py-2">${r.status === 'active' ? '<span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Active</span>' : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">Removed</span>'}</td>
+                    <td class="px-3 py-2">${statusBadge(r.status)}</td>
                     <td class="px-3 py-2"><a href="student-comments.html?userId=${r.user_id}" class="text-xs font-bold text-signal hover:underline">Comments</a></td>
-                    <td class="px-3 py-2"><button type="button" data-resend data-user-id="${r.user_id}" data-cohort-id="${cohortId}" class="text-xs font-bold text-signal hover:underline">Resend Welcome</button></td>
-                </tr>`).join('');
+                    <td class="px-3 py-2 whitespace-nowrap">
+                        <button type="button" data-toggle-edit data-user-id="${r.user_id}" class="text-xs font-bold text-signal hover:underline">Edit</button>
+                        &middot;
+                        <button type="button" data-resend data-user-id="${r.user_id}" data-cohort-id="${cohortId}" class="text-xs font-bold text-signal hover:underline">Resend</button>
+                    </td>
+                </tr>${editRowHtml(r, cohortId)}`).join('');
             return `
                 <table class="w-full text-left text-sm">
                     <thead class="text-xs font-black uppercase text-gray-500"><tr><th class="px-3 py-1">Name</th><th class="px-3 py-1">Email</th><th class="px-3 py-1">Phone</th><th class="px-3 py-1">Tier</th><th class="px-3 py-1">Status</th><th class="px-3 py-1"></th><th class="px-3 py-1"></th></tr></thead>
@@ -252,10 +290,51 @@
                         body: JSON.stringify({ userId: btn.dataset.userId, cohortId: btn.dataset.cohortId })
                     });
                     btn.disabled = false;
-                    btn.textContent = sOk && sData.emailSent ? 'Sent ✓' : 'Resend Welcome';
+                    btn.textContent = sOk && sData.emailSent ? 'Sent ✓' : 'Resend';
                     if (sOk && !sData.emailSent && sData.tempPassword) {
                         alert(`Email failed to send. New temp password: ${sData.tempPassword}`);
                     }
+                });
+            });
+
+            slot.querySelectorAll('[data-toggle-edit]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const editRow = slot.querySelector(`[data-edit-row="${btn.dataset.userId}"]`);
+                    if (editRow) editRow.classList.toggle('hidden');
+                });
+            });
+
+            slot.querySelectorAll('[data-cancel-edit]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    btn.closest('tr.editRow').classList.add('hidden');
+                });
+            });
+
+            slot.querySelectorAll('[data-edit-form]').forEach((form) => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const resultEl = form.querySelector('[data-edit-result]');
+                    resultEl.textContent = 'Saving…';
+                    resultEl.className = 'text-xs font-bold text-gray-500';
+                    const { ok: eOk, data: eData } = await apiFetch('admin-attendee', {
+                        method: 'PATCH',
+                        body: JSON.stringify({
+                            userId: form.dataset.userId,
+                            cohortId: form.dataset.cohortId,
+                            fullName: form.fullName.value,
+                            email: form.email.value,
+                            phone: form.phone.value,
+                            tier: form.tier.value,
+                            status: form.status.value
+                        })
+                    });
+                    if (!eOk) {
+                        resultEl.textContent = (eData && eData.error) || 'Could not save changes.';
+                        resultEl.className = 'text-xs font-bold text-red-600';
+                        return;
+                    }
+                    await loadCohortDetail(cohortId, slot);
+                    await loadCohortList();
                 });
             });
         }

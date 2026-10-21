@@ -82,8 +82,8 @@ exports.handler = async (event) => {
         const tempPassword = generateTempPassword();
         const passwordHash = await bcrypt.hash(tempPassword, 10);
         const [created] = await sql`
-            insert into users (email, password_hash, full_name, phone)
-            values (${email}, ${passwordHash}, ${fullName}, ${phone})
+            insert into users (email, password_hash, full_name, phone, must_change_password)
+            values (${email}, ${passwordHash}, ${fullName}, ${phone}, true)
             returning id
         `;
         userId = created.id;

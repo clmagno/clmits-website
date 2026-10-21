@@ -38,7 +38,7 @@ exports.handler = async (event) => {
     }
 
     const newHash = await bcrypt.hash(newPassword, 10);
-    await sql`update users set password_hash = ${newHash} where id = ${user.id}`;
+    await sql`update users set password_hash = ${newHash}, must_change_password = false where id = ${user.id}`;
 
     return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
 };

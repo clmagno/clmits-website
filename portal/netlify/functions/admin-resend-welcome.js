@@ -53,7 +53,7 @@ exports.handler = async (event) => {
 
     const tempPassword = generateTempPassword();
     const passwordHash = await bcrypt.hash(tempPassword, 10);
-    await sql`update users set password_hash = ${passwordHash} where id = ${userId}`;
+    await sql`update users set password_hash = ${passwordHash}, must_change_password = true where id = ${userId}`;
 
     const { subject, html } = welcomeEmail({
         fullName: user.full_name,

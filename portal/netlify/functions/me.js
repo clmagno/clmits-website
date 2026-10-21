@@ -14,7 +14,7 @@ exports.handler = async (event) => {
 
     const sql = getDb();
 
-    const [me] = await sql`select subscription_until, role from users where id = ${sessionUser.id}`;
+    const [me] = await sql`select subscription_until, role, must_change_password from users where id = ${sessionUser.id}`;
     const active = Boolean(me && me.subscription_until && new Date(me.subscription_until) > new Date());
     const role = me ? me.role : 'student';
 
@@ -77,6 +77,7 @@ exports.handler = async (event) => {
         body: JSON.stringify({
             email: sessionUser.email,
             role,
+            mustChangePassword: Boolean(me && me.must_change_password),
             canManageContent: role === 'admin' || role === 'instructor',
             subscription: { active, until: me ? me.subscription_until : null },
             courses,

@@ -27,9 +27,15 @@ function getTransporter() {
 
 async function sendMail({ to, subject, html }) {
     const fromName = process.env.SMTP_FROM_NAME || 'CL Magno I.T. Solutions';
+    // BCC the sending mailbox itself on every send -- the only reliable way
+    // to "check the sent email" regardless of whether the SMTP provider's
+    // own Sent folder behavior can be trusted. Settable separately
+    // (EMAIL_LOG_BCC) in case a dedicated log address is ever wanted instead.
+    const bcc = process.env.EMAIL_LOG_BCC || process.env.SMTP_USER;
     await getTransporter().sendMail({
         from: `"${fromName}" <${process.env.SMTP_USER}>`,
         to,
+        bcc,
         subject,
         html
     });

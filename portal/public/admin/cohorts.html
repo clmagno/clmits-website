@@ -104,11 +104,15 @@
                             <input name="driveFolderUrl" placeholder="https://drive.google.com/drive/folders/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
                         </div>
                         <div>
-                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Capacity (slots) &mdash; optional</label>
-                            <input type="number" name="capacity" min="1" placeholder="e.g. 20" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
-                            <p class="mt-1 text-xs text-gray-500">Shown publicly as "X slots left" on clmits.com. Leave blank for open enrollment.</p>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Early Bird Slots &mdash; optional</label>
+                            <input type="number" name="capacityEarlyBird" min="1" placeholder="e.g. 10" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Standard Slots &mdash; optional</label>
+                            <input type="number" name="capacityStandard" min="1" placeholder="e.g. 10" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
                         </div>
                     </div>
+                    <p class="mt-1 text-xs text-gray-500">Each shown publicly as "X slots left" on clmits.com, tracked separately. Leave either blank for open (uncapped) enrollment at that tier.</p>
 
                     <div class="mt-4" id="meetLinkSection">
                         ${googleConnected ? `
@@ -133,11 +137,15 @@
 
         function registerFormHtml(cohortId) {
             return `
-                <form data-register-form data-cohort-id="${cohortId}" class="mt-3 grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-3">
+                <form data-register-form data-cohort-id="${cohortId}" class="mt-3 grid gap-3 rounded-lg border border-line bg-paper p-4 sm:grid-cols-4">
                     <input name="fullName" placeholder="Full name" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
                     <input name="email" type="email" placeholder="Email" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
                     <input name="phone" placeholder="Phone (optional)" class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
-                    <div class="sm:col-span-3 flex items-center gap-3">
+                    <select name="tier" required class="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        <option value="early_bird">Early Bird</option>
+                        <option value="standard">Standard</option>
+                    </select>
+                    <div class="sm:col-span-4 flex items-center gap-3">
                         <button type="submit" class="rounded-lg bg-ink px-4 py-2 text-xs font-black text-white hover:brightness-110">Register Attendee</button>
                         <p data-register-result class="text-xs font-bold"></p>
                     </div>
@@ -148,18 +156,22 @@
             if (!roster.length) {
                 return '<p class="text-sm text-gray-500">No attendees registered yet.</p>';
             }
+            const tierBadge = (tier) => tier === 'early_bird'
+                ? '<span class="rounded-md bg-violet-100 px-2 py-0.5 text-[11px] font-black text-violet-700">Early Bird</span>'
+                : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-600">Standard</span>';
             const rows = roster.map((r) => `
                 <tr>
                     <td class="px-3 py-2 font-bold">${escapeHtml(r.full_name || '(no name)')}</td>
                     <td class="px-3 py-2 text-gray-600">${escapeHtml(r.email)}</td>
                     <td class="px-3 py-2 text-gray-600">${escapeHtml(r.phone || '—')}</td>
+                    <td class="px-3 py-2">${tierBadge(r.tier)}</td>
                     <td class="px-3 py-2">${r.status === 'active' ? '<span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-black text-emerald-700">Active</span>' : '<span class="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-black text-gray-500">Removed</span>'}</td>
                     <td class="px-3 py-2"><a href="student-comments.html?userId=${r.user_id}" class="text-xs font-bold text-signal hover:underline">Comments</a></td>
                     <td class="px-3 py-2"><button type="button" data-resend data-user-id="${r.user_id}" data-cohort-id="${cohortId}" class="text-xs font-bold text-signal hover:underline">Resend Welcome</button></td>
                 </tr>`).join('');
             return `
                 <table class="w-full text-left text-sm">
-                    <thead class="text-xs font-black uppercase text-gray-500"><tr><th class="px-3 py-1">Name</th><th class="px-3 py-1">Email</th><th class="px-3 py-1">Phone</th><th class="px-3 py-1">Status</th><th class="px-3 py-1"></th><th class="px-3 py-1"></th></tr></thead>
+                    <thead class="text-xs font-black uppercase text-gray-500"><tr><th class="px-3 py-1">Name</th><th class="px-3 py-1">Email</th><th class="px-3 py-1">Phone</th><th class="px-3 py-1">Tier</th><th class="px-3 py-1">Status</th><th class="px-3 py-1"></th><th class="px-3 py-1"></th></tr></thead>
                     <tbody class="divide-y divide-line">${rows}</tbody>
                 </table>`;
         }
@@ -173,8 +185,9 @@
                             <h3 class="text-xl font-black tracking-tight">${escapeHtml(c.name)}</h3>
                             <p class="mt-1 text-sm text-gray-600">${scheduleLabel(c.schedule_type)} &middot; Starts ${fmtDate(c.start_date)} &middot; ${c.duration_weeks} weeks</p>
                         </div>
-                        <div class="flex shrink-0 items-center gap-2">
-                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">${c.active_count}${c.capacity ? ' / ' + c.capacity : ''} enrolled</span>
+                        <div class="flex shrink-0 flex-wrap items-center gap-2">
+                            <span class="rounded-md bg-violet-100 px-2.5 py-1 text-xs font-black text-violet-700">EB: ${c.active_early_bird}${c.capacity_early_bird ? ' / ' + c.capacity_early_bird : ''}</span>
+                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">Std: ${c.active_standard}${c.capacity_standard ? ' / ' + c.capacity_standard : ''}</span>
                             <button type="button" data-action="toggle-roster" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Roster</button>
                         </div>
                     </div>
@@ -209,7 +222,8 @@
                         fullName: form.fullName.value,
                         email: form.email.value,
                         phone: form.phone.value,
-                        cohortId
+                        cohortId,
+                        tier: form.tier.value
                     })
                 });
                 if (!rOk) {
@@ -338,7 +352,8 @@
                             startDate: form.startDate.value,
                             durationWeeks: form.durationWeeks.value,
                             driveFolderUrl: form.driveFolderUrl.value,
-                            capacity: form.capacity.value,
+                            capacityEarlyBird: form.capacityEarlyBird.value,
+                            capacityStandard: form.capacityStandard.value,
                             meetLink: form.meetLink.value,
                             autoCreateMeet: form.autoCreateMeet ? form.autoCreateMeet.checked : false
                         })

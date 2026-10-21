@@ -34,7 +34,7 @@ exports.handler = async (event) => {
             return { statusCode: 404, body: JSON.stringify({ error: 'Cohort not found.' }) };
         }
         const roster = await sql`
-            select u.id as user_id, u.full_name, u.email, u.phone, ce.status, ce.enrolled_at
+            select u.id as user_id, u.full_name, u.email, u.phone, ce.status, ce.tier, ce.enrolled_at
             from cohort_enrollments ce join users u on u.id = ce.user_id
             where ce.cohort_id = ${qs.id}
             order by ce.enrolled_at desc
@@ -49,9 +49,10 @@ exports.handler = async (event) => {
     if (event.httpMethod === 'GET') {
         const cohorts = await sql`
             select co.id, co.name, co.schedule_type, co.start_date, co.duration_weeks,
-                   co.meet_link, co.drive_folder_url, co.capacity, co.created_at,
+                   co.meet_link, co.drive_folder_url, co.capacity_early_bird, co.capacity_standard, co.created_at,
                    c.title as course_title, c.slug as course_slug,
-                   (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active') as active_count
+                   (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active' and ce.tier = 'early_bird') as active_early_bird,
+                   (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active' and ce.tier = 'standard') as active_standard
             from cohorts co join courses c on c.id = co.course_id
             order by co.start_date desc
         `;
@@ -80,7 +81,8 @@ exports.handler = async (event) => {
         const driveFolderUrl = body.driveFolderUrl ? String(body.driveFolderUrl).trim() : null;
         const meetLink = body.meetLink ? String(body.meetLink).trim() : null;
         const autoCreateMeet = Boolean(body.autoCreateMeet);
-        const capacity = body.capacity !== undefined && body.capacity !== '' ? Number(body.capacity) : null;
+        const capacityEarlyBird = body.capacityEarlyBird !== undefined && body.capacityEarlyBird !== '' ? Number(body.capacityEarlyBird) : null;
+        const capacityStandard = body.capacityStandard !== undefined && body.capacityStandard !== '' ? Number(body.capacityStandard) : null;
 
         if (!courseId || !name || !['weekday', 'weekend'].includes(scheduleType) || !/^\d{4}-\d{2}-\d{2}$/.test(startDate) || durationWeeks < 1) {
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing or invalid cohort fields.' }) };
@@ -121,8 +123,8 @@ exports.handler = async (event) => {
         }
 
         const [cohort] = await sql`
-            insert into cohorts (course_id, name, schedule_type, start_date, duration_weeks, meet_link, google_calendar_event_id, drive_folder_url, capacity)
-            values (${courseId}, ${name}, ${scheduleType}, ${startDate}, ${durationWeeks}, ${finalMeetLink}, ${googleEventId}, ${driveFolderUrl}, ${capacity})
+            insert into cohorts (course_id, name, schedule_type, start_date, duration_weeks, meet_link, google_calendar_event_id, drive_folder_url, capacity_early_bird, capacity_standard)
+            values (${courseId}, ${name}, ${scheduleType}, ${startDate}, ${durationWeeks}, ${finalMeetLink}, ${googleEventId}, ${driveFolderUrl}, ${capacityEarlyBird}, ${capacityStandard})
             returning id
         `;
 
@@ -153,7 +155,8 @@ exports.handler = async (event) => {
         const durationWeeks = Number(body.durationWeeks) || 0;
         const driveFolderUrl = body.driveFolderUrl ? String(body.driveFolderUrl).trim() : null;
         const meetLink = body.meetLink ? String(body.meetLink).trim() : null;
-        const capacity = body.capacity !== undefined && body.capacity !== '' ? Number(body.capacity) : null;
+        const capacityEarlyBird = body.capacityEarlyBird !== undefined && body.capacityEarlyBird !== '' ? Number(body.capacityEarlyBird) : null;
+        const capacityStandard = body.capacityStandard !== undefined && body.capacityStandard !== '' ? Number(body.capacityStandard) : null;
 
         if (!name || !['weekday', 'weekend'].includes(scheduleType) || !/^\d{4}-\d{2}-\d{2}$/.test(startDate) || durationWeeks < 1) {
             return { statusCode: 400, body: JSON.stringify({ error: 'Missing or invalid cohort fields.' }) };
@@ -163,7 +166,7 @@ exports.handler = async (event) => {
             update cohorts
             set name = ${name}, schedule_type = ${scheduleType}, start_date = ${startDate},
                 duration_weeks = ${durationWeeks}, drive_folder_url = ${driveFolderUrl}, meet_link = ${meetLink},
-                capacity = ${capacity}
+                capacity_early_bird = ${capacityEarlyBird}, capacity_standard = ${capacityStandard}
             where id = ${id}
         `;
 

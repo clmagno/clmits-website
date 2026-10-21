@@ -26,9 +26,10 @@ exports.handler = async (event) => {
     const email = String(body.email || '').trim().toLowerCase();
     const phone = body.phone ? String(body.phone).trim() : null;
     const cohortId = String(body.cohortId || '').trim();
+    const tier = String(body.tier || '').trim();
 
-    if (!fullName || !EMAIL_RE.test(email) || !cohortId) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'Name, a valid email, and a cohort are required.' }) };
+    if (!fullName || !EMAIL_RE.test(email) || !cohortId || !['early_bird', 'standard'].includes(tier)) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Name, a valid email, a cohort, and a pricing tier are required.' }) };
     }
 
     const sql = getDb();
@@ -106,9 +107,9 @@ exports.handler = async (event) => {
     }
 
     await sql`
-        insert into cohort_enrollments (user_id, cohort_id)
-        values (${userId}, ${cohortId})
-        on conflict (user_id, cohort_id) do update set status = 'active'
+        insert into cohort_enrollments (user_id, cohort_id, tier)
+        values (${userId}, ${cohortId}, ${tier})
+        on conflict (user_id, cohort_id) do update set status = 'active', tier = ${tier}
     `;
 
     return {

@@ -29,14 +29,18 @@ exports.handler = async (event) => {
 
     const sql = getDb();
     const rows = await sql`
-        select co.id, co.name, co.schedule_type, co.start_date, co.duration_weeks, co.capacity,
+        select co.id, co.name, co.schedule_type, co.start_date, co.duration_weeks,
+               co.capacity_early_bird, co.capacity_standard,
                c.title as course_title, c.slug as course_slug,
-               (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active') as active_count
+               (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active' and ce.tier = 'early_bird') as active_early_bird,
+               (select count(*)::int from cohort_enrollments ce where ce.cohort_id = co.id and ce.status = 'active' and ce.tier = 'standard') as active_standard
         from cohorts co
         join courses c on c.id = co.course_id
         where co.start_date >= current_date
         order by co.start_date asc
     `;
+
+    const slotsFor = (capacity, activeCount) => (capacity != null ? Math.max(0, capacity - activeCount) : null);
 
     const cohorts = rows.map((r) => ({
         courseTitle: r.course_title,
@@ -45,8 +49,8 @@ exports.handler = async (event) => {
         scheduleType: r.schedule_type,
         startDate: toDateString(r.start_date),
         durationWeeks: r.duration_weeks,
-        slotsRemaining: r.capacity != null ? Math.max(0, r.capacity - r.active_count) : null,
-        capacity: r.capacity
+        earlyBird: { capacity: r.capacity_early_bird, slotsRemaining: slotsFor(r.capacity_early_bird, r.active_early_bird) },
+        standard: { capacity: r.capacity_standard, slotsRemaining: slotsFor(r.capacity_standard, r.active_standard) }
     }));
 
     return { statusCode: 200, headers, body: JSON.stringify({ cohorts }) };

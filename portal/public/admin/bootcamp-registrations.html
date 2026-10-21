@@ -105,6 +105,26 @@
                 </table>
             </div>
             <p id="emptyState" class="hidden py-10 text-center text-sm text-gray-500">No registrations match.</p>
+
+            <div class="mt-12">
+                <h2 class="text-xl font-black tracking-tight">Book Purchases</h2>
+                <p class="mt-1 text-sm text-gray-600">Phase 1 unlocks automatically. Phase 2 &amp; 3 currently require you to email the buyer full access manually — their content isn't written yet.</p>
+                <div class="mt-4 overflow-x-auto rounded-xl border border-line bg-white">
+                    <table class="w-full text-left text-sm">
+                        <thead class="border-b border-line bg-paper text-xs font-black uppercase tracking-wide text-gray-500">
+                            <tr>
+                                <th class="px-4 py-3">Name</th>
+                                <th class="px-4 py-3">Email</th>
+                                <th class="px-4 py-3">Book</th>
+                                <th class="px-4 py-3">Amount</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookPurchasesBody" class="divide-y divide-line"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </main>
         </div>
@@ -231,6 +251,20 @@
             return mainRow + (hasPlan ? renderPlanDetailRow(r) : '') + renderAddCohortRow(r);
         }
 
+        const BOOK_TITLES = { phase1: 'Phase 1: Foundations', phase2: 'Phase 2: Data Processing', phase3: 'Phase 3: Big Data & Automation' };
+
+        function renderBookPurchaseRow(p) {
+            return `
+                <tr>
+                    <td class="px-4 py-3 font-bold">${escapeHtml(p.full_name)}</td>
+                    <td class="px-4 py-3 text-gray-600">${escapeHtml(p.email)}</td>
+                    <td class="px-4 py-3">${escapeHtml(BOOK_TITLES[p.book_slug] || p.book_slug)}</td>
+                    <td class="px-4 py-3">${fmtPeso(p.amount_centavos)}</td>
+                    <td class="px-4 py-3">${statusBadge(p.status)}</td>
+                    <td class="px-4 py-3 text-gray-600">${fmtDate(p.paid_at || p.created_at)}</td>
+                </tr>`;
+        }
+
         function renderStats(regs) {
             const total = regs.length;
             const paid = regs.filter((r) => r.status === 'paid');
@@ -286,6 +320,11 @@
             const regs = data.registrations;
             renderStats(regs);
             document.getElementById('regsBody').innerHTML = regs.map(renderRow).join('');
+
+            const bookPurchases = data.bookPurchases || [];
+            document.getElementById('bookPurchasesBody').innerHTML = bookPurchases.length
+                ? bookPurchases.map(renderBookPurchaseRow).join('')
+                : '<tr><td colspan="6" class="px-4 py-6 text-center text-sm text-gray-500">No book purchases yet.</td></tr>';
 
             document.getElementById('regsBody').addEventListener('click', async (e) => {
                 const toggleBtn = e.target.closest('.togglePlanBtn');

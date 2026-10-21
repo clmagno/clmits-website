@@ -1,5 +1,8 @@
 const { getDb } = require('./_lib/db');
 const { verifyWebhookSignature } = require('./_lib/paymongo');
+const { getBook } = require('./_lib/bookPricing');
+const { bookPurchaseEmail } = require('./_lib/emailTemplates');
+const { sendMail } = require('./_lib/email');
 
 // NOTE: PayMongo's exact event payload shape for checkout sessions isn't something
 // I could verify from official docs at build time. This handler is written against
@@ -77,13 +80,43 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'OK' };
     }
 
-    await sql`
+    const [paidInstallment] = await sql`
         update bootcamp_installments
         set status = 'paid', paid_at = now()
         where paymongo_checkout_session_id = ${checkoutSessionId} and status = 'pending'
+        returning id
     `;
 
-    // Either a bootcamp installment (now updated), an unknown session, or
-    // already processed by an earlier delivery of this event -- all OK.
+    if (paidInstallment) {
+        return { statusCode: 200, body: 'OK' };
+    }
+
+    const [paidBook] = await sql`
+        update book_purchases
+        set status = 'paid', paid_at = now()
+        where paymongo_checkout_session_id = ${checkoutSessionId} and status = 'pending'
+        returning full_name, email, book_slug, access_token
+    `;
+
+    if (paidBook) {
+        const book = getBook(paidBook.book_slug);
+        const portalUrl = process.env.SITE_URL || 'https://clmits.com';
+        try {
+            const { subject, html } = bookPurchaseEmail({
+                fullName: paidBook.full_name,
+                bookTitle: book.title,
+                unlockUrl: `${portalUrl}/books/${book.file}?unlock=${paidBook.access_token}`
+            });
+            await sendMail({ to: paidBook.email, subject, html });
+        } catch (err) {
+            // Don't fail the webhook over email delivery -- the purchase is
+            // already recorded as paid, and the admin's BCC copy (if SMTP
+            // is even configured yet) isn't required for the sale to count.
+            console.error('Failed to send book purchase email', err);
+        }
+        return { statusCode: 200, body: 'OK' };
+    }
+
+    // Unknown session, or already processed by an earlier delivery of this event.
     return { statusCode: 200, body: 'OK' };
 };

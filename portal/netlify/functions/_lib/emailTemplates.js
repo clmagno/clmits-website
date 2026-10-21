@@ -149,4 +149,30 @@ function cohortAddedEmail({ fullName, courseTitle, cohort, portalUrl }) {
     return { subject, html };
 }
 
-module.exports = { welcomeEmail, cohortAddedEmail, formatDateYMD, scheduleDaysAndTime, firstNameOf };
+function bookPurchaseEmail({ fullName, bookTitle, unlockUrl }) {
+    const subject = `You're In! Full Access — ${bookTitle}`;
+
+    const unlockSection = unlockUrl
+        ? `<p>Your full access is unlocked already — just click through:</p>
+           <p><a href="${escapeHtml(unlockUrl)}" style="display:inline-block;background:#050505;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Read the Full Book →</a></p>
+           <p style="font-size:13px;color:#555;">Keep this email — that link is your permanent access key to the full book.</p>`
+        : `<p>We're finishing this book's full content and will email it to you directly — usually within 24 hours. Thanks for your patience!</p>`;
+
+    const html = `
+    <meta charset="UTF-8">
+    <div style="${BASE_STYLE}">
+        <p>Hi ${escapeHtml(firstNameOf(fullName))},</p>
+
+        <p>Thank you for purchasing full access to <strong>${escapeHtml(bookTitle)}</strong>!</p>
+
+        ${unlockSection}
+
+        <p>If anything doesn't work, just reply to this email with your receipt and we'll sort it out.</p>
+
+        ${SIGNATURE_HTML}
+    </div>`;
+
+    return { subject, html };
+}
+
+module.exports = { welcomeEmail, cohortAddedEmail, bookPurchaseEmail, formatDateYMD, scheduleDaysAndTime, firstNameOf };

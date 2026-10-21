@@ -817,7 +817,7 @@
                         <p class="mt-4 text-sm leading-6 text-white/65">Weeks 1-4. Set up your dev environment, learn Python from variables to functions and files, then load BrightCart into PostgreSQL and build a star-schema reporting layer.</p>
                         <div class="mt-6 flex flex-wrap gap-3">
                             <a href="books/Phase_1_Book.html" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">Preview Free</a>
-                            <a href="index.html?book=phase1#contact" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</a>
+                            <button type="button" onclick="openBookModal('phase1')" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</button>
                         </div>
                     </article>
 
@@ -828,7 +828,7 @@
                         <p class="mt-4 text-sm leading-6 text-white/65">Weeks 5-8. Clean real messy data with pandas, build extract/transform/load pipelines, ship data to cloud storage, and model a physical star schema warehouse.</p>
                         <div class="mt-6 flex flex-wrap gap-3">
                             <a href="books/Phase_2_Book.html" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">Preview Free</a>
-                            <a href="index.html?book=phase2#contact" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</a>
+                            <button type="button" onclick="openBookModal('phase2')" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</button>
                         </div>
                     </article>
 
@@ -839,7 +839,7 @@
                         <p class="mt-4 text-sm leading-6 text-white/65">Weeks 9-12. Schedule pipelines with Airflow, process data too big for one laptop with PySpark, containerize everything with Docker, then build your own capstone platform.</p>
                         <div class="mt-6 flex flex-wrap gap-3">
                             <a href="books/Phase_3_Book.html" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">Preview Free</a>
-                            <a href="index.html?book=phase3#contact" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</a>
+                            <button type="button" onclick="openBookModal('phase3')" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</button>
                         </div>
                     </article>
                 </div>
@@ -1078,9 +1078,6 @@
                                 <option value="PythonAutomation">Python Automation for IT & Ops</option>
                                 <option value="SQLFoundations">SQL Foundations</option>
                                 <option value="SelfPaced">Self-Paced Masterclass</option>
-                                <option value="Phase1Book">Buying Phase 1 Book (Full Access)</option>
-                                <option value="Phase2Book">Buying Phase 2 Book (Full Access)</option>
-                                <option value="Phase3Book">Buying Phase 3 Book (Full Access)</option>
                                 <option value="AppDev">Cross-Platform App Development</option>
                                 <option value="Training">Corporate I.T. Training</option>
                             </select>
@@ -1174,20 +1171,14 @@
             });
         }
 
-        // Prefill the inquiry form when arriving from a book's "Buy Full Access" button
-        // e.g. index.html?book=phase2#contact
-        (function prefillFromBookParam() {
+        // Prefill the inquiry form when arriving with ?interest=... (e.g. from
+        // a free-resources page's "Enroll" link)
+        (function prefillFromInterestParam() {
             const params = new URLSearchParams(window.location.search);
-            const book = params.get('book');
             const interest = params.get('interest');
             const interestSelect = document.getElementById('interest');
             const messageField = document.getElementById('message');
 
-            const bookCopy = {
-                phase1: { option: 'Phase1Book', text: "I'd like to purchase full access to the Phase 1 book (Foundations). " },
-                phase2: { option: 'Phase2Book', text: "I'd like to purchase full access to the Phase 2 book (Data Processing & Architecture). " },
-                phase3: { option: 'Phase3Book', text: "I'd like to purchase full access to the Phase 3 book (Big Data & Automation). " }
-            };
             const interestCopy = {
                 CloudDEBundle: { option: 'CloudDEBundle', text: "I'd like to reserve a slot in the Cloud + Data Engineering Track (Data Engineering Career Accelerator), December 2026 cohort. " },
                 GCPBootcamp: { option: 'GCPBootcamp', text: "I'd like to reserve a slot in the GCP Associate Cloud Engineer Bootcamp (starts Dec 5). " },
@@ -1195,9 +1186,7 @@
                 SQLFoundations: { option: 'SQLFoundations', text: "I'd like to reserve a slot in SQL Foundations (starts Nov 7). " }
             };
 
-            const bookMatch = book && bookCopy[book];
-            const interestMatch = interest && interestCopy[interest];
-            const match = bookMatch || interestMatch;
+            const match = interest && interestCopy[interest];
             if (!match) return;
             if (interestSelect) interestSelect.value = match.option;
             if (messageField && !messageField.value) messageField.value = match.text;
@@ -1567,5 +1556,100 @@
             </form>
         </div>
     </div>
+
+    <!-- Book full-access payment modal -->
+    <div id="bookModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4">
+        <div class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500">Buy Full Access</p>
+                    <h3 id="bookModalTitle" class="mt-1 text-xl font-black tracking-tight text-ink"></h3>
+                </div>
+                <button type="button" onclick="closeBookModal()" class="shrink-0 rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-ink" aria-label="Close">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            <p id="bookModalPrice" class="mt-2 text-2xl font-black tracking-tight text-ink"></p>
+
+            <form id="bookForm" class="mt-5 space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">Full Name</label>
+                    <input id="bookName" type="text" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold uppercase tracking-wide text-gray-500">Email</label>
+                    <input id="bookEmail" type="email" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                    <p class="mt-1 text-[11px] text-gray-500">Your unlock link goes here right after payment — use an email you check.</p>
+                </div>
+
+                <p id="bookError" class="hidden rounded-lg bg-red-50 p-3 text-xs font-bold text-red-600"></p>
+
+                <button id="bookSubmitBtn" type="submit" class="w-full rounded-lg bg-ink px-5 py-3 text-sm font-black text-white transition hover:brightness-110">Continue to Payment →</button>
+                <p class="text-center text-[11px] text-gray-400">You'll be redirected to PayMongo's secure checkout (GCash, Maya, card, or QR Ph).</p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const BOOKS = {
+            phase1: { title: 'Phase 1: Foundations', price: 499 },
+            phase2: { title: 'Phase 2: Data Processing & Architecture', price: 599 },
+            phase3: { title: 'Phase 3: Big Data & Automation', price: 599 }
+        };
+        const BOOK_CHECKOUT_URL = 'https://portal.clmits.com/.netlify/functions/book-checkout';
+        let currentBookSlug = null;
+
+        function openBookModal(slug) {
+            const book = BOOKS[slug];
+            if (!book) return;
+            currentBookSlug = slug;
+            document.getElementById('bookModalTitle').textContent = book.title;
+            document.getElementById('bookModalPrice').textContent = `₱${book.price.toLocaleString()}`;
+            document.getElementById('bookError').classList.add('hidden');
+            document.getElementById('bookForm').reset();
+            document.getElementById('bookSubmitBtn').disabled = false;
+            document.getElementById('bookSubmitBtn').textContent = 'Continue to Payment →';
+            document.getElementById('bookModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeBookModal() {
+            document.getElementById('bookModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('bookForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const errorEl = document.getElementById('bookError');
+                errorEl.classList.add('hidden');
+
+                const fullName = document.getElementById('bookName').value.trim();
+                const email = document.getElementById('bookEmail').value.trim();
+
+                const submitBtn = document.getElementById('bookSubmitBtn');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Redirecting to payment…';
+
+                try {
+                    const res = await fetch(BOOK_CHECKOUT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ fullName, email, bookSlug: currentBookSlug })
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data || !data.checkoutUrl) {
+                        throw new Error((data && data.error) || 'Could not start checkout. Please try again.');
+                    }
+                    window.location.href = data.checkoutUrl;
+                } catch (err) {
+                    errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+                    errorEl.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Continue to Payment →';
+                }
+            });
+        });
+    </script>
 </body>
 </html>

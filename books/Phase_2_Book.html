@@ -168,7 +168,7 @@ footer.book-footer{max-width:760px; margin-top:80px; padding:30px 0 10px; border
 <div class="site-bar">
   <span class="tag">Preview</span>
   <span>Chapter 0 &amp; 1 are free · the rest unlocks with purchase</span>
-  <a href="../index.html#books">Buy full access →</a>
+  <a href="#" onclick="openBuyModal();return false;">Buy full access →</a>
 </div>
 <div id="progress"></div>
 <button class="mobile-toc-toggle" id="mobileTocToggle"><i class="fa-solid fa-list"></i></button>
@@ -187,7 +187,7 @@ footer.book-footer{max-width:760px; margin-top:80px; padding:30px 0 10px; border
       <a href="../index.html"><i class="fa-solid fa-house"></i> CLMITS Home</a>
       <a href="Phase_1_Book.html"><i class="fa-solid fa-arrow-left"></i> Back to Phase 1</a>
       <a href="Phase_3_Book.html"><i class="fa-solid fa-arrow-right"></i> Continue to Phase 3</a>
-      <a href="../index.html#books" style="color:#fbbf24;font-weight:700;"><i class="fa-solid fa-lock-open"></i> Unlock Full Phase 2</a>
+      <a href="#" onclick="openBuyModal();return false;" style="color:#fbbf24;font-weight:700;"><i class="fa-solid fa-lock-open"></i> Unlock Full Phase 2</a>
     </div>
   </aside>
   <main class="main">
@@ -357,19 +357,20 @@ df = df.<span class="c-fn">drop_duplicates</span>(subset=[<span class="c-str">"o
   <h3>Unlock Chapters 2–5</h3>
   <p>Get the complete ETL pipelines, cloud engineering, and data warehousing chapters — with full code, diagrams, and portfolio project instructions — plus every future update to this book.</p>
   <div class="paywall-actions">
-    <a class="paywall-buy" href="../index.html?book=phase2#contact">Buy Full Access</a>
+    <a class="paywall-buy" href="#" onclick="openBuyModal();return false;">Buy Full Access</a>
     <a class="paywall-bootcamp" href="../index.html#bootcamps">Get it free with the Bootcamp</a>
   </div>
 </div>
 
 <footer class="book-footer">
-  <p>BrightCart Data Engineering Bootcamp — Phase 2: Data Processing &amp; Architecture. A resource from <a href="../index.html">CL Magno I.T. Solutions</a>. Chapters 0–1 are free · <a href="../index.html?book=phase2#contact">buy full access</a> or get it included in the <a href="../index.html#bootcamps">live 12-week bootcamp</a>.</p>
+  <p>BrightCart Data Engineering Bootcamp — Phase 2: Data Processing &amp; Architecture. A resource from <a href="../index.html">CL Magno I.T. Solutions</a>. Chapters 0–1 are free · <a href="#" onclick="openBuyModal();return false;">buy full access</a> or get it included in the <a href="../index.html#bootcamps">live 12-week bootcamp</a>.</p>
 </footer>
     </div>
   </main>
 </div>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
+  await window.unlockFullContent();
   const toc = document.getElementById('toc');
   const chapters = document.querySelectorAll('.chapter, .locked-chapter');
   let tocHtml = '';
@@ -425,6 +426,109 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   allLinks.forEach(a => a.addEventListener('click', () => sidebar.classList.remove('open')));
 });
+</script>
+
+<div id="buyModalOverlay" style="display:none;position:fixed;inset:0;z-index:20000;background:rgba(2,6,23,.75);align-items:center;justify-content:center;padding:16px;">
+  <div style="width:100%;max-width:420px;background:#0f172a;border:1px solid #243247;border-radius:18px;padding:28px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+      <div>
+        <p style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8ea0b8;margin:0 0 4px;">Buy Full Access</p>
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;color:#f8fafc;margin:0;">Phase 2: Data Processing &amp; Architecture</h3>
+      </div>
+      <button type="button" onclick="closeBuyModal()" style="background:none;border:none;color:#8ea0b8;font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>
+    <p style="font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:#fbbf24;margin:14px 0 0;">₱599</p>
+    <form id="buyForm" style="margin-top:18px;display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#8ea0b8;margin-bottom:6px;">Full Name</label>
+        <input id="buyName" type="text" required style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #243247;background:#020617;color:#f8fafc;font-size:14px;outline:none;">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:#8ea0b8;margin-bottom:6px;">Email</label>
+        <input id="buyEmail" type="email" required style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid #243247;background:#020617;color:#f8fafc;font-size:14px;outline:none;">
+        <p style="font-size:11px;color:#8ea0b8;margin:6px 0 0;">Your unlock link goes here right after payment.</p>
+      </div>
+      <p id="buyError" style="display:none;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);color:#fca5a5;font-size:12px;font-weight:700;padding:10px 12px;border-radius:10px;"></p>
+      <button id="buySubmitBtn" type="submit" style="background:#fbbf24;color:#1a1300;border:none;border-radius:10px;padding:13px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14.5px;cursor:pointer;">Continue to Payment →</button>
+      <p style="text-align:center;font-size:11px;color:#8ea0b8;margin:0;">You'll be redirected to PayMongo's secure checkout (GCash, Maya, card, or QR Ph).</p>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  const BOOK_SLUG = 'phase2';
+  const CHECKOUT_URL = 'https://portal.clmits.com/.netlify/functions/book-checkout';
+  const CONTENT_URL = 'https://portal.clmits.com/.netlify/functions/book-content';
+
+  window.openBuyModal = function () {
+    document.getElementById('buyModalOverlay').style.display = 'flex';
+  };
+  window.closeBuyModal = function () {
+    document.getElementById('buyModalOverlay').style.display = 'none';
+  };
+
+  document.getElementById('buyForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const errorEl = document.getElementById('buyError');
+    errorEl.style.display = 'none';
+    const fullName = document.getElementById('buyName').value.trim();
+    const email = document.getElementById('buyEmail').value.trim();
+    const btn = document.getElementById('buySubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Redirecting to payment…';
+    try {
+      const res = await fetch(CHECKOUT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, bookSlug: BOOK_SLUG })
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || !data.checkoutUrl) throw new Error((data && data.error) || 'Could not start checkout.');
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      errorEl.textContent = err.message || 'Something went wrong. Please try again.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Continue to Payment →';
+    }
+  });
+
+  function showUnlockBanner(type, message) {
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:sticky;top:41px;z-index:10002;padding:12px 16px;text-align:center;font-size:13.5px;font-weight:700;';
+    if (type === 'success') { bar.style.background = '#052e1a'; bar.style.color = '#6ee7b7'; }
+    else if (type === 'pending') { bar.style.background = '#1a1300'; bar.style.color = '#fbbf24'; }
+    else { bar.style.background = '#2a0a0a'; bar.style.color = '#fca5a5'; }
+    bar.textContent = message;
+    document.querySelector('.shell').prepend(bar);
+  }
+
+  window.unlockFullContent = async function () {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('unlock');
+    if (!token) return;
+    try {
+      const res = await fetch(`${CONTENT_URL}?token=${encodeURIComponent(token)}&book=${BOOK_SLUG}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) { showUnlockBanner('error', (data && data.error) || 'Could not verify your purchase.'); return; }
+      if (data.pending) { showUnlockBanner('pending', data.message); return; }
+      if (data.html) {
+        const container = document.querySelector('.content-col');
+        const firstLocked = document.querySelector('.locked-chapter');
+        const paywall = document.querySelector('.paywall-cta');
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = data.html;
+        if (firstLocked && container) container.insertBefore(wrapper, firstLocked);
+        document.querySelectorAll('.locked-chapter').forEach(function (el) { el.remove(); });
+        if (paywall) paywall.remove();
+        showUnlockBanner('success', 'Full access unlocked — enjoy the rest of the book!');
+      }
+    } catch (err) {
+      showUnlockBanner('error', 'Could not verify your purchase. Contact admin@clmits.com with your receipt.');
+    }
+  };
+})();
 </script>
 </body>
 </html>

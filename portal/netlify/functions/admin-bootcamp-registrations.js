@@ -41,9 +41,15 @@ exports.handler = async (event) => {
         installments: installmentsByRegistration.get(r.id) || []
     }));
 
+    const bookPurchases = await sql`
+        select id, full_name, email, book_slug, amount_centavos, status, created_at, paid_at
+        from book_purchases
+        order by created_at desc
+    `;
+
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrations: registrationsWithPlan })
+        body: JSON.stringify({ registrations: registrationsWithPlan, bookPurchases })
     };
 };

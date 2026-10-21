@@ -23,6 +23,7 @@
                 Your Courses
             </a>
             <div class="flex items-center gap-4">
+                <a id="overviewLink" href="overview.html" class="hidden text-sm font-bold hover:text-signal">Overview</a>
                 <a id="studentsLink" href="students.html" class="hidden text-sm font-bold hover:text-signal">Students</a>
                 <a id="registrationsLink" href="bootcamp-registrations.html" class="hidden text-sm font-bold hover:text-signal">Registrations</a>
                 <a id="cohortsLink" href="cohorts.html" class="hidden text-sm font-bold hover:text-signal">Cohorts</a>
@@ -100,6 +101,7 @@
             document.getElementById('userEmail').textContent = session.email;
             document.getElementById('logoutBtn').addEventListener('click', logout);
             if (session.role === 'admin') {
+                document.getElementById('overviewLink').classList.remove('hidden');
                 document.getElementById('studentsLink').classList.remove('hidden');
                 document.getElementById('registrationsLink').classList.remove('hidden');
                 document.getElementById('cohortsLink').classList.remove('hidden');

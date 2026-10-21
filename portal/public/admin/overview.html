@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Overview | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <nav class="border-b border-line bg-white">
+        <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
+            <a href="https://clmits.com" class="text-sm font-black tracking-tight">CL Magno I.T. Solutions</a>
+            <div class="flex items-center gap-4">
+                <a href="students.html" class="text-sm font-bold hover:text-signal">Students</a>
+                <a href="bootcamp-registrations.html" class="text-sm font-bold hover:text-signal">Registrations</a>
+                <a href="cohorts.html" class="text-sm font-bold hover:text-signal">Cohorts</a>
+                <a href="courses.html" class="text-sm font-bold hover:text-signal">Manage Content</a>
+                <a href="../dashboard.html?stay=1" class="text-sm font-bold hover:text-signal">Your Courses</a>
+                <span id="userEmail" class="text-sm text-gray-600"></span>
+                <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="mx-auto max-w-6xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <h1 class="text-3xl font-black tracking-tight">Overview</h1>
+            <p class="mt-2 text-sm text-gray-600">What needs your attention right now.</p>
+
+            <div id="statChips" class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3"></div>
+
+            <div class="mt-10 grid gap-6 lg:grid-cols-[1fr_380px]">
+                <section>
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-black">Needs Follow-Up</h2>
+                        <a href="bootcamp-registrations.html" class="text-xs font-bold text-signal hover:underline">View all registrations &rarr;</a>
+                    </div>
+                    <div id="followUpList" class="mt-3 space-y-3"></div>
+                </section>
+
+                <aside>
+                    <h2 class="text-lg font-black">Next Cohort</h2>
+                    <div id="nextCohortCard" class="mt-3"></div>
+                </aside>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtDate(ymd) {
+            if (!ymd) return '—';
+            const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number);
+            return new Date(y, m - 1, d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        function fmtDateTime(iso) {
+            if (!iso) return '—';
+            return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+        }
+        function fmtPeso(centavos) {
+            return `₱${(centavos / 100).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        }
+        function scheduleLabel(scheduleType) {
+            return scheduleType === 'weekend' ? 'Saturdays, 4:00–7:00 PM' : 'Tue/Wed/Fri, 7:00 PM';
+        }
+        function daysUntil(ymd) {
+            const [y, m, d] = String(ymd).slice(0, 10).split('-').map(Number);
+            const target = new Date(y, m - 1, d);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return Math.round((target - today) / 86400000);
+        }
+
+        function statChip(num, label) {
+            return `
+                <div class="rounded-xl border border-line bg-white p-5">
+                    <div class="text-2xl font-black tracking-tight">${num}</div>
+                    <div class="mt-1 text-xs font-bold uppercase tracking-wide text-gray-500">${label}</div>
+                </div>`;
+        }
+
+        function followUpRow(r) {
+            return `
+                <div class="rounded-xl border border-line bg-white p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                    <div>
+                        <p class="font-bold">${escapeHtml(r.full_name)}</p>
+                        <p class="text-xs text-gray-500">${escapeHtml(r.email)} &middot; ${escapeHtml(r.offering_slug)} &middot; ${escapeHtml(r.tier_label)}</p>
+                    </div>
+                    <div class="mt-2 text-right sm:mt-0">
+                        <p class="text-sm font-black">${fmtPeso(r.amount_centavos)} <span class="font-normal text-gray-400">of ${fmtPeso(r.total_price_centavos)}</span></p>
+                        <p class="text-xs text-gray-400">Submitted ${fmtDateTime(r.created_at)}</p>
+                    </div>
+                </div>`;
+        }
+
+        function nextCohortHtml(c) {
+            if (!c) {
+                return '<div class="rounded-xl border border-dashed border-line bg-white p-5 text-sm text-gray-500">No upcoming cohorts scheduled.</div>';
+            }
+            const days = daysUntil(c.start_date);
+            const whenLabel = days === 0 ? 'Starts today' : days === 1 ? 'Starts tomorrow' : days > 0 ? `Starts in ${days} days` : 'In progress';
+            return `
+                <div class="rounded-xl border border-line bg-white p-5">
+                    <p class="text-xs font-bold uppercase tracking-wide text-gray-500">${escapeHtml(c.course_title)}</p>
+                    <h3 class="mt-1 text-lg font-black tracking-tight">${escapeHtml(c.name)}</h3>
+                    <p class="mt-1 text-sm text-gray-600">${scheduleLabel(c.schedule_type)} &middot; ${fmtDate(c.start_date)}</p>
+                    <p class="mt-1 text-xs font-black text-signal">${whenLabel}</p>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <span class="rounded-md bg-violet-100 px-2.5 py-1 text-xs font-black text-violet-700">EB: ${c.active_early_bird}${c.capacity_early_bird ? ' / ' + c.capacity_early_bird : ''}</span>
+                        <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">Std: ${c.active_standard}${c.capacity_standard ? ' / ' + c.capacity_standard : ''}</span>
+                    </div>
+                    <a href="cohorts.html" class="mt-4 inline-block text-xs font-bold text-signal hover:underline">Manage roster &rarr;</a>
+                </div>`;
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('userEmail').textContent = session.email;
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            const { ok, data } = await apiFetch('admin-overview');
+            if (!ok) {
+                document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load overview.';
+                return;
+            }
+
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+
+            document.getElementById('statChips').innerHTML =
+                statChip(data.stats.totalStudents, 'Portal Accounts') +
+                statChip(data.stats.activeSubscriptions, 'Active Subscriptions') +
+                statChip(data.stats.pendingRegistrations, 'Pending Registrations');
+
+            const followUp = document.getElementById('followUpList');
+            followUp.innerHTML = data.pendingRegistrations.length
+                ? data.pendingRegistrations.map(followUpRow).join('')
+                : '<p class="text-sm text-gray-500">Nothing pending — you\'re all caught up.</p>';
+
+            document.getElementById('nextCohortCard').innerHTML = nextCohortHtml(data.nextCohort);
+        })();
+    </script>
+</body>
+</html>

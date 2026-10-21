@@ -18,14 +18,15 @@
 <body class="min-h-screen bg-paper text-ink antialiased">
     <nav class="border-b border-line bg-white">
         <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-            <a href="../dashboard.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
+            <a href="overview.html" class="inline-flex items-center gap-2 text-sm font-black tracking-tight hover:text-signal">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                Your Courses
+                Overview
             </a>
             <div class="flex items-center gap-4">
                 <a href="students.html" class="text-sm font-bold hover:text-signal">Students</a>
                 <a href="cohorts.html" class="text-sm font-bold hover:text-signal">Cohorts</a>
                 <a href="courses.html" class="text-sm font-bold hover:text-signal">Manage Content</a>
+                <a href="../dashboard.html?stay=1" class="text-sm font-bold hover:text-signal">Your Courses</a>
                 <button id="logoutBtn" class="rounded-lg border border-line px-4 py-2 text-sm font-bold hover:bg-gray-50">Sign Out</button>
             </div>
         </div>
@@ -63,6 +64,7 @@
                             <th class="px-4 py-3">Amount</th>
                             <th class="px-4 py-3">Status</th>
                             <th class="px-4 py-3">Date</th>
+                            <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
                     <tbody id="regsBody" class="divide-y divide-line"></tbody>
@@ -107,6 +109,42 @@
             ];
         }
 
+        let cohorts = [];
+
+        function matchingCohorts(offeringSlug) {
+            const matches = cohorts.filter((c) => c.course_slug === offeringSlug);
+            return matches.length ? matches : cohorts;
+        }
+        function guessTier(tierStr) {
+            return /standard/i.test(tierStr || '') ? 'standard' : 'early_bird';
+        }
+
+        function renderAddCohortRow(r) {
+            const opts = matchingCohorts(r.offering_slug);
+            if (!opts.length) {
+                return `
+                    <tr class="addCohortRow hidden" data-add-cohort-detail="${r.id}">
+                        <td colspan="8" class="bg-paper px-4 py-3 text-xs text-gray-500">No cohorts exist yet for this offering &mdash; create one in Cohorts first.</td>
+                    </tr>`;
+            }
+            const cohortOptions = opts.map((c) => `<option value="${c.id}">${escapeHtml(c.course_title)} — ${escapeHtml(c.name)}</option>`).join('');
+            const guessedTier = guessTier(r.tier);
+            return `
+                <tr class="addCohortRow hidden" data-add-cohort-detail="${r.id}">
+                    <td colspan="8" class="bg-paper px-4 py-3">
+                        <form data-add-cohort-form data-reg-id="${r.id}" class="flex flex-wrap items-center gap-2">
+                            <select name="cohortId" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">${cohortOptions}</select>
+                            <select name="tier" class="rounded-lg border border-gray-300 px-2 py-1.5 text-xs outline-none focus:border-ink">
+                                <option value="early_bird" ${guessedTier === 'early_bird' ? 'selected' : ''}>Early Bird</option>
+                                <option value="standard" ${guessedTier === 'standard' ? 'selected' : ''}>Standard</option>
+                            </select>
+                            <button type="submit" class="rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white hover:brightness-110">Confirm</button>
+                            <p data-add-cohort-result class="text-xs font-bold"></p>
+                        </form>
+                    </td>
+                </tr>`;
+        }
+
         function renderPlanDetailRow(r) {
             const rows = fullPlan(r).map((i) => {
                 const actionCell = i.position === 1
@@ -127,7 +165,7 @@
             }).join('');
             return `
                 <tr class="planDetailRow hidden" data-reg-detail="${r.id}">
-                    <td colspan="7" class="bg-paper px-4 py-3">${rows}</td>
+                    <td colspan="8" class="bg-paper px-4 py-3">${rows}</td>
                 </tr>`;
         }
 
@@ -140,7 +178,7 @@
             `;
 
             const mainRow = `
-                <tr class="align-top" data-q="${escapeHtml((r.full_name + ' ' + r.email).toLowerCase())}" data-offering="${escapeHtml(r.offering_slug)}" data-status="${r.status}">
+                <tr class="align-top" data-reg-id="${r.id}" data-q="${escapeHtml((r.full_name + ' ' + r.email).toLowerCase())}" data-offering="${escapeHtml(r.offering_slug)}" data-status="${r.status}">
                     <td class="px-4 py-3 font-bold">${escapeHtml(r.full_name)}</td>
                     <td class="px-4 py-3 text-gray-600">
                         <div>${escapeHtml(r.email)}</div>
@@ -151,9 +189,10 @@
                     <td class="px-4 py-3">${amountCell}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
                     <td class="px-4 py-3 text-gray-600">${fmtDate(r.paid_at || r.created_at)}</td>
+                    <td class="px-4 py-3"><button type="button" class="addCohortBtn text-xs font-bold text-signal hover:underline" data-reg="${r.id}">+ Add to Cohort</button></td>
                 </tr>`;
 
-            return hasPlan ? mainRow + renderPlanDetailRow(r) : mainRow;
+            return mainRow + (hasPlan ? renderPlanDetailRow(r) : '') + renderAddCohortRow(r);
         }
 
         function renderStats(regs) {
@@ -186,11 +225,15 @@
                 return;
             }
 
-            const { ok, data } = await apiFetch('admin-bootcamp-registrations');
+            const [{ ok, data }, { ok: cOk, data: cData }] = await Promise.all([
+                apiFetch('admin-bootcamp-registrations'),
+                apiFetch('admin-cohorts')
+            ]);
             if (!ok) {
                 document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load registrations.';
                 return;
             }
+            if (cOk) cohorts = cData.cohorts || [];
 
             document.getElementById('loadingState').classList.add('hidden');
             document.getElementById('pageState').classList.remove('hidden');
@@ -203,6 +246,13 @@
                 const toggleBtn = e.target.closest('.togglePlanBtn');
                 if (toggleBtn) {
                     const detailRow = document.querySelector(`tr.planDetailRow[data-reg-detail="${toggleBtn.dataset.reg}"]`);
+                    if (detailRow) detailRow.classList.toggle('hidden');
+                    return;
+                }
+
+                const addCohortBtn = e.target.closest('.addCohortBtn');
+                if (addCohortBtn) {
+                    const detailRow = document.querySelector(`tr.addCohortRow[data-add-cohort-detail="${addCohortBtn.dataset.reg}"]`);
                     if (detailRow) detailRow.classList.toggle('hidden');
                     return;
                 }
@@ -243,6 +293,40 @@
                 }
             });
 
+            document.getElementById('regsBody').addEventListener('submit', async (e) => {
+                const form = e.target.closest('[data-add-cohort-form]');
+                if (!form) return;
+                e.preventDefault();
+                const resultEl = form.querySelector('[data-add-cohort-result]');
+                resultEl.textContent = 'Adding…';
+                resultEl.className = 'text-xs font-bold text-gray-500';
+                const reg = regs.find((x) => x.id === form.dataset.regId);
+                const { ok: aOk, data: aData } = await apiFetch('admin-register-attendee', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        fullName: reg.full_name,
+                        email: reg.email,
+                        phone: reg.phone,
+                        cohortId: form.cohortId.value,
+                        tier: form.tier.value
+                    })
+                });
+                if (!aOk) {
+                    resultEl.textContent = (aData && aData.error) || 'Could not add to cohort.';
+                    resultEl.className = 'text-xs font-bold text-red-600';
+                    return;
+                }
+                if (!aData.emailSent) {
+                    resultEl.textContent = aData.tempPassword
+                        ? `Added, but email failed. Temp password: ${aData.tempPassword}`
+                        : 'Added, but the email failed to send.';
+                    resultEl.className = 'text-xs font-bold text-amber-600';
+                } else {
+                    resultEl.textContent = 'Added — welcome email sent ✓';
+                    resultEl.className = 'text-xs font-bold text-emerald-600';
+                }
+            });
+
             const offeringFilter = document.getElementById('offeringFilter');
             const offerings = [...new Set(regs.map((r) => r.offering_slug))].sort();
             offeringFilter.innerHTML = '<option value="">All offerings</option>' +
@@ -265,12 +349,10 @@
                     row.style.display = show ? '' : 'none';
                     if (show) visibleCount += 1;
 
-                    const detailRow = row.nextElementSibling;
-                    if (detailRow && detailRow.classList.contains('planDetailRow') && !show) {
-                        detailRow.style.display = 'none';
-                    } else if (detailRow && detailRow.classList.contains('planDetailRow') && show) {
-                        detailRow.style.display = '';
-                    }
+                    const regId = row.dataset.regId;
+                    document.querySelectorAll(`tr[data-reg-detail="${regId}"], tr[data-add-cohort-detail="${regId}"]`).forEach((detailRow) => {
+                        detailRow.style.display = show ? '' : 'none';
+                    });
                 });
                 document.getElementById('emptyState').classList.toggle('hidden', visibleCount > 0);
             }

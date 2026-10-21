@@ -20,9 +20,23 @@ exports.handler = async (event) => {
     const [{ count: activeSubscriptions }] = await sql`
         select count(*)::int as count from users where subscription_until is not null and subscription_until > now()
     `;
-    const [{ count: pendingRegistrations }] = await sql`
-        select count(*)::int as count from bootcamp_registrations where status = 'pending'
+    const [{ total: totalRegistrations, paid: paidRegistrations, pending: pendingRegistrations }] = await sql`
+        select count(*)::int as total,
+               count(*) filter (where status = 'paid')::int as paid,
+               count(*) filter (where status = 'pending')::int as pending
+        from bootcamp_registrations
     `;
+
+    const [{ total: regRevenue }] = await sql`
+        select coalesce(sum(amount_centavos), 0)::int as total from bootcamp_registrations where status = 'paid'
+    `;
+    const [{ total: installmentRevenue }] = await sql`
+        select coalesce(sum(amount_centavos), 0)::int as total from bootcamp_installments where status = 'paid'
+    `;
+    const [{ total: subRevenue }] = await sql`
+        select coalesce(sum(amount_centavos), 0)::int as total from payments where status = 'paid'
+    `;
+    const revenueCentavos = regRevenue + installmentRevenue + subRevenue;
 
     const pending = await sql`
         select id, full_name, email, phone, offering_slug, tier, tier_label,
@@ -33,7 +47,7 @@ exports.handler = async (event) => {
         limit 8
     `;
 
-    const nextCohortRows = await sql`
+    const upcomingCohortRows = await sql`
         select co.id, co.name, co.schedule_type, co.start_date, co.duration_weeks,
                co.capacity_early_bird, co.capacity_standard,
                c.title as course_title,
@@ -42,17 +56,46 @@ exports.handler = async (event) => {
         from cohorts co join courses c on c.id = co.course_id
         where co.start_date >= current_date
         order by co.start_date asc
-        limit 1
+        limit 4
     `;
-    const nextCohort = nextCohortRows[0] ? { ...nextCohortRows[0], start_date: toDateString(nextCohortRows[0].start_date) } : null;
+    const upcomingCohorts = upcomingCohortRows.map((c) => ({ ...c, start_date: toDateString(c.start_date) }));
+
+    const registrationTrendRows = await sql`
+        select to_char(date_trunc('week', created_at), 'YYYY-MM-DD') as week, count(*)::int as count
+        from bootcamp_registrations
+        group by week
+        order by week
+    `;
+    const signupTrendRows = await sql`
+        select to_char(date_trunc('week', created_at), 'YYYY-MM-DD') as week, count(*)::int as count
+        from users
+        group by week
+        order by week
+    `;
+    const offeringBreakdown = await sql`
+        select offering_slug, count(*)::int as count
+        from bootcamp_registrations
+        group by offering_slug
+        order by count desc
+    `;
 
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            stats: { totalStudents, activeSubscriptions, pendingRegistrations },
+            stats: {
+                totalStudents,
+                activeSubscriptions,
+                totalRegistrations,
+                paidRegistrations,
+                pendingRegistrations,
+                revenueCentavos
+            },
             pendingRegistrations: pending,
-            nextCohort
+            upcomingCohorts,
+            registrationTrend: registrationTrendRows,
+            signupTrend: signupTrendRows,
+            offeringBreakdown
         })
     };
 };

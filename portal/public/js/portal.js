@@ -21,11 +21,15 @@ async function getSession() {
 }
 
 // Redirects to login if the visitor has no session. Returns the session when present.
+// Absolute path (/login.html), not relative -- this file is shared by pages
+// at different directory depths (root pages and admin/*), and a relative
+// 'login.html' resolves against the CALLING page's own path, so from e.g.
+// admin/cohorts.html it was landing on the nonexistent admin/login.html.
 async function requireAuth() {
     const session = await getSession();
     if (!session) {
         const next = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `login.html?next=${next}`;
+        window.location.href = `/login.html?next=${next}`;
         return null;
     }
     return session;
@@ -33,5 +37,5 @@ async function requireAuth() {
 
 async function logout() {
     await apiFetch('auth-logout', { method: 'POST' });
-    window.location.href = 'login.html';
+    window.location.href = '/login.html';
 }

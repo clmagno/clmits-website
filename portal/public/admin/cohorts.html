@@ -214,6 +214,55 @@
                 </table>`;
         }
 
+        function editCohortFormHtml(c) {
+            return `
+                <form data-edit-cohort-form data-cohort-id="${c.id}" class="mt-4 rounded-lg border border-line bg-paper p-4">
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Cohort Name</label>
+                            <input name="name" value="${escapeAttr(c.name)}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Schedule</label>
+                            <select name="scheduleType" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                                <option value="weekend" ${c.schedule_type === 'weekend' ? 'selected' : ''}>Weekend — Saturdays, 4:00–7:00 PM</option>
+                                <option value="weekday" ${c.schedule_type === 'weekday' ? 'selected' : ''}>Weekday — Tue/Wed/Fri, 7:00 PM</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">First Class Date</label>
+                            <input type="date" name="startDate" value="${escapeAttr(c.start_date)}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Duration (weeks)</label>
+                            <input type="number" name="durationWeeks" min="1" value="${c.duration_weeks}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Drive Folder</label>
+                            <input name="driveFolderUrl" value="${escapeAttr(c.drive_folder_url || '')}" placeholder="https://drive.google.com/drive/folders/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Meet Link</label>
+                            <input name="meetLink" value="${escapeAttr(c.meet_link || '')}" placeholder="https://meet.google.com/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Early Bird Slots &mdash; optional</label>
+                            <input type="number" name="capacityEarlyBird" min="1" value="${c.capacity_early_bird == null ? '' : c.capacity_early_bird}" placeholder="e.g. 10" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Standard Slots &mdash; optional</label>
+                            <input type="number" name="capacityStandard" min="1" value="${c.capacity_standard == null ? '' : c.capacity_standard}" placeholder="e.g. 10" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                        </div>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500">Course can't be changed after creation &mdash; delete and recreate the cohort if it's under the wrong course.</p>
+                    <div class="mt-4 flex items-center gap-3">
+                        <button type="submit" class="rounded-lg bg-ink px-4 py-2 text-xs font-black text-white hover:brightness-110">Save Cohort</button>
+                        <button type="button" data-cancel-edit-cohort class="rounded-lg border border-line bg-white px-4 py-2 text-xs font-bold hover:bg-gray-50">Cancel</button>
+                        <p data-edit-cohort-result class="text-xs font-bold"></p>
+                    </div>
+                </form>`;
+        }
+
         function cohortCardHtml(c) {
             return `
                 <article class="rounded-xl border border-line bg-white p-6" data-cohort-card="${c.id}">
@@ -226,6 +275,7 @@
                         <div class="flex shrink-0 flex-wrap items-center gap-2">
                             <span class="rounded-md bg-violet-100 px-2.5 py-1 text-xs font-black text-violet-700">EB: ${c.active_early_bird}${c.capacity_early_bird ? ' / ' + c.capacity_early_bird : ''}</span>
                             <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">Std: ${c.active_standard}${c.capacity_standard ? ' / ' + c.capacity_standard : ''}</span>
+                            <button type="button" data-action="toggle-edit-cohort" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Edit</button>
                             <button type="button" data-action="toggle-roster" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Roster</button>
                         </div>
                     </div>
@@ -235,6 +285,7 @@
                         ${c.drive_folder_url ? `<a href="${escapeAttr(c.drive_folder_url)}" target="_blank" rel="noopener" class="font-bold text-signal hover:underline">Drive Folder →</a>` : '<span class="text-gray-400">No Drive folder set</span>'}
                     </div>
 
+                    <div data-role="editCohortSlot" class="hidden">${editCohortFormHtml(c)}</div>
                     <div data-role="rosterSlot" class="mt-4 hidden"></div>
                 </article>`;
         }
@@ -354,6 +405,45 @@
                     slot.classList.toggle('hidden');
                     if (hidden && !slot.innerHTML.trim()) loadCohortDetail(cohortId, slot);
                 });
+
+                const editSlot = card.querySelector('[data-role="editCohortSlot"]');
+                card.querySelector('[data-action="toggle-edit-cohort"]').addEventListener('click', () => {
+                    editSlot.classList.toggle('hidden');
+                });
+                const editCohortCancel = editSlot.querySelector('[data-cancel-edit-cohort]');
+                if (editCohortCancel) {
+                    editCohortCancel.addEventListener('click', () => editSlot.classList.add('hidden'));
+                }
+                const editCohortForm = editSlot.querySelector('[data-edit-cohort-form]');
+                if (editCohortForm) {
+                    editCohortForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const form = e.target;
+                        const resultEl = form.querySelector('[data-edit-cohort-result]');
+                        resultEl.textContent = 'Saving…';
+                        resultEl.className = 'text-xs font-bold text-gray-500';
+                        const { ok, data } = await apiFetch('admin-cohorts', {
+                            method: 'PUT',
+                            body: JSON.stringify({
+                                id: cohortId,
+                                name: form.name.value,
+                                scheduleType: form.scheduleType.value,
+                                startDate: form.startDate.value,
+                                durationWeeks: form.durationWeeks.value,
+                                driveFolderUrl: form.driveFolderUrl.value,
+                                meetLink: form.meetLink.value,
+                                capacityEarlyBird: form.capacityEarlyBird.value,
+                                capacityStandard: form.capacityStandard.value
+                            })
+                        });
+                        if (!ok) {
+                            resultEl.textContent = (data && data.error) || 'Could not save changes.';
+                            resultEl.className = 'text-xs font-bold text-red-600';
+                            return;
+                        }
+                        await loadCohortList();
+                    });
+                }
             });
         }
 

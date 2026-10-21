@@ -6,12 +6,19 @@ const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Accepts a 'YYYY-MM-DD' string (what Postgres `date` columns come back as)
-// and formats it via plain string parsing -- never goes through a JS Date
-// object, so there's no UTC-vs-local-timezone off-by-one-day risk.
-function formatDateYMD(ymd) {
-    const str = typeof ymd === 'string' ? ymd : String(ymd);
-    const [y, m, d] = str.slice(0, 10).split('-').map(Number);
+// Accepts either a 'YYYY-MM-DD' string or the real JS Date object the Neon
+// driver actually returns for a Postgres `date` column (it represents
+// correct local midnight -- read it with local getters, never toISOString/
+// UTC, which would shift the calendar date backward by a day).
+function formatDateYMD(value) {
+    let y, m, d;
+    if (value instanceof Date) {
+        y = value.getFullYear();
+        m = value.getMonth() + 1;
+        d = value.getDate();
+    } else {
+        [y, m, d] = String(value).slice(0, 10).split('-').map(Number);
+    }
     return `${MONTH_NAMES[m - 1]} ${d}, ${y}`;
 }
 

@@ -1,5 +1,6 @@
 const { getDb } = require('./_lib/db');
 const { getSessionUser } = require('./_lib/auth');
+const { toDateString } = require('./_lib/dates');
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'GET') {
@@ -63,7 +64,7 @@ exports.handler = async (event) => {
         courseTitle: cohortRow.course_title,
         courseSlug: cohortRow.course_slug,
         scheduleType: cohortRow.schedule_type,
-        startDate: cohortRow.start_date,
+        startDate: toDateString(cohortRow.start_date),
         durationWeeks: cohortRow.duration_weeks,
         meetLink: cohortRow.meet_link,
         driveFolderUrl: cohortRow.drive_folder_url,

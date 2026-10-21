@@ -103,6 +103,11 @@
                             <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Drive Folder (recordings &amp; resources)</label>
                             <input name="driveFolderUrl" placeholder="https://drive.google.com/drive/folders/..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
                         </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Capacity (slots) &mdash; optional</label>
+                            <input type="number" name="capacity" min="1" placeholder="e.g. 20" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                            <p class="mt-1 text-xs text-gray-500">Shown publicly as "X slots left" on clmits.com. Leave blank for open enrollment.</p>
+                        </div>
                     </div>
 
                     <div class="mt-4" id="meetLinkSection">
@@ -169,7 +174,7 @@
                             <p class="mt-1 text-sm text-gray-600">${scheduleLabel(c.schedule_type)} &middot; Starts ${fmtDate(c.start_date)} &middot; ${c.duration_weeks} weeks</p>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
-                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">${c.active_count} enrolled</span>
+                            <span class="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-black text-gray-600">${c.active_count}${c.capacity ? ' / ' + c.capacity : ''} enrolled</span>
                             <button type="button" data-action="toggle-roster" class="rounded-lg border border-line px-3 py-1.5 text-xs font-black hover:bg-gray-50">Roster</button>
                         </div>
                     </div>
@@ -333,6 +338,7 @@
                             startDate: form.startDate.value,
                             durationWeeks: form.durationWeeks.value,
                             driveFolderUrl: form.driveFolderUrl.value,
+                            capacity: form.capacity.value,
                             meetLink: form.meetLink.value,
                             autoCreateMeet: form.autoCreateMeet ? form.autoCreateMeet.checked : false
                         })

@@ -82,6 +82,7 @@
                     statusEl.textContent = 'Password updated.';
                     statusEl.className = 'text-sm font-bold text-emerald-600';
                     form.reset();
+                    document.getElementById('tempPasswordNotice').classList.add('hidden');
                 } else {
                     statusEl.textContent = (data && data.error) || 'Could not update password.';
                     statusEl.className = 'text-sm font-bold text-red-600';

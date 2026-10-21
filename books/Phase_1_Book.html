@@ -43,7 +43,7 @@ code{font-family:var(--mono); background:rgba(56,189,248,.1); color:#7dd3fc; pad
 .site-bar{position:sticky; top:0; z-index:10003; background:#050505; border-bottom:1px solid #1e293b; display:flex; align-items:center; justify-content:center; gap:14px; padding:10px 16px; font-size:13px; color:#cbd5e1; flex-wrap:wrap; text-align:center;}
 .site-bar a{color:#38bdf8; font-weight:700; text-decoration:none;}
 .site-bar a:hover{text-decoration:underline;}
-.site-bar .tag{background:#34d399; color:#042f1e; font-weight:800; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:999px;}
+.site-bar .tag{background:#fbbf24; color:#1a1300; font-weight:800; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 8px; border-radius:999px;}
 
 /* ---------------- layout shell ---------------- */
 .shell{display:flex; min-height:100vh; position:relative; z-index:1;}
@@ -65,6 +65,8 @@ code{font-family:var(--mono); background:rgba(56,189,248,.1); color:#7dd3fc; pad
 .toc-chapter-link{display:flex; gap:10px; align-items:baseline; padding:9px 10px; border-radius:8px; color:var(--text-strong); text-decoration:none; font-size:13.8px; font-weight:600; font-family:'Space Grotesk',sans-serif;}
 .toc-chapter-link .n{color:var(--sky); font-size:12px; opacity:.85;}
 .toc-chapter-link:hover{background:var(--panel-soft);}
+.toc-chapter-link.locked{opacity:.55;}
+.toc-chapter-link.locked .n{color:var(--amber);}
 .toc-lessons{list-style:none;margin:2px 0 10px 0;padding-left:22px;border-left:1px solid var(--border-soft);}
 .toc-lessons li a{display:block;padding:6px 12px;font-size:13px;color:var(--text-muted);text-decoration:none;border-radius:6px;}
 .toc-lessons li a:hover{color:var(--sky);background:var(--panel-soft);}
@@ -239,12 +241,27 @@ td code{white-space:nowrap;}
 
 footer.book-footer{max-width:760px; margin-top:80px; padding:30px 0 10px; border-top:1px solid var(--border-soft); color:var(--text-muted); font-size:13px;}
 
-/* enroll CTA banner, injected for the live site version of this book */
-.enroll-cta{max-width:760px; margin:40px 0; background:linear-gradient(135deg,#050505,#171717); border:1px solid #2a2a2a; border-radius:18px; padding:28px 30px; display:flex; flex-wrap:wrap; gap:20px; align-items:center; justify-content:space-between;}
-.enroll-cta h4{color:#fff; font-size:19px; margin-bottom:6px;}
-.enroll-cta p{color:#b7b7b7; font-size:14px; margin:0; max-width:420px;}
-.enroll-cta a{flex-shrink:0; background:#38bdf8; color:#020617; font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; padding:12px 22px; border-radius:10px; text-decoration:none; white-space:nowrap;}
-.enroll-cta a:hover{filter:brightness(1.08);}
+/* ---------------- paywall ---------------- */
+.locked-chapter{position:relative; max-width:760px; border:1px solid var(--border-soft); border-radius:18px; padding:26px 28px 30px; margin-bottom:22px; background:var(--panel-soft); overflow:hidden;}
+.locked-chapter::after{content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 0%, rgba(2,6,23,.5) 60%, rgba(2,6,23,.92) 100%); pointer-events:none;}
+.locked-chapter-inner{position:relative; filter:blur(.3px); opacity:.82;}
+.locked-head{display:flex; gap:16px; align-items:flex-start; margin-bottom:14px;}
+.locked-badge{flex-shrink:0; width:42px; height:42px; border-radius:11px; background:rgba(251,191,36,.15); border:1px solid rgba(251,191,36,.4); color:var(--amber); display:flex; align-items:center; justify-content:center; font-size:17px;}
+.locked-lessons{list-style:none; margin:10px 0 0; padding:0;}
+.locked-lessons li{display:flex; gap:10px; align-items:center; padding:8px 0; font-size:14px; color:var(--text-muted); border-bottom:1px dashed var(--border-soft);}
+.locked-lessons li:last-child{border-bottom:none;}
+.locked-lessons li i{color:var(--amber); font-size:12px; width:14px; flex-shrink:0;}
+.paywall-cta{max-width:760px; background:linear-gradient(135deg,#1a1300,#050505); border:1px solid #3a2a00; border-radius:20px; padding:34px 32px; margin:10px 0 40px; text-align:center;}
+.paywall-cta .lock-icon{width:56px; height:56px; border-radius:50%; background:rgba(251,191,36,.15); border:1px solid rgba(251,191,36,.4); color:var(--amber); display:flex; align-items:center; justify-content:center; font-size:22px; margin:0 auto 16px;}
+.paywall-cta h3{color:#fff; font-size:24px; margin-bottom:10px;}
+.paywall-cta p{color:#c9c9c9; max-width:480px; margin:0 auto 22px; font-size:15px;}
+.paywall-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap;}
+.paywall-actions a{font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14.5px; padding:13px 24px; border-radius:10px; text-decoration:none;}
+.paywall-buy{background:var(--amber); color:#1a1300;}
+.paywall-buy:hover{filter:brightness(1.08);}
+.paywall-bootcamp{background:transparent; color:#fff; border:1px solid #444;}
+.paywall-bootcamp:hover{border-color:#777;}
+.paywall-price{font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--amber); font-size:13px; letter-spacing:.04em; margin-bottom:14px; display:block;}
 
 @media (max-width:980px){
   .sidebar{position:fixed; left:0; top:0; z-index:10001; transform:translateX(-105%); transition:.25s ease; box-shadow:20px 0 60px rgba(0,0,0,.5); height:100vh;}
@@ -266,9 +283,9 @@ footer.book-footer{max-width:760px; margin-top:80px; padding:30px 0 10px; border
 </head>
 <body>
 <div class="site-bar">
-  <span class="tag">Free · Full Book</span>
-  <span>Phase 1 of the CLMITS Data Engineering Bootcamp</span>
-  <a href="../index.html#bootcamps">See the live 12-week bootcamp →</a>
+  <span class="tag">Preview</span>
+  <span>Chapters 0 &amp; 1 are free · the rest unlocks with purchase</span>
+  <a href="../index.html#books">Buy full access →</a>
 </div>
 <div id="progress"></div>
 <button class="mobile-toc-toggle" id="mobileTocToggle"><i class="fa-solid fa-list"></i></button>
@@ -285,8 +302,8 @@ footer.book-footer{max-width:760px; margin-top:80px; padding:30px 0 10px; border
     <ul class="toc" id="toc"></ul>
     <div class="sidebar-foot">
       <a href="../index.html"><i class="fa-solid fa-house"></i> CLMITS Home</a>
-      <a href="../index.html#books"><i class="fa-solid fa-book"></i> All Books</a>
       <a href="Phase_2_Book.html"><i class="fa-solid fa-arrow-right"></i> Continue to Phase 2: Data Processing</a>
+      <a href="../index.html#books" style="color:#fbbf24;font-weight:700;"><i class="fa-solid fa-lock-open"></i> Unlock Full Phase 1</a>
     </div>
   </aside>
   <main class="main">
@@ -501,467 +518,154 @@ git push                        <span class="c-cmt"># upload to GitHub</span></c
   <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Run <code>python --version</code> and see a version number, not an error</span></li><li><i class="fa-solid fa-square-check"></i><span>Open a folder in VS Code using <code>code .</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Move between folders in a terminal using <code>cd</code>, <code>ls</code>, and <code>mkdir</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Explain the difference between <code>git add</code>, <code>git commit</code>, and <code>git push</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Have a GitHub repository containing your first commit</span></li></ul>
 </div><div class="chapter-endnav">
       <a href="#chapter-0"><span class="lbl">Back</span><span class="ttl">How This Book Works</span></a>
-      <a class="next" href="#chapter-2"><span class="lbl">Next</span><span class="ttl">Python Fundamentals I →</span></a>
+      <a class="next" href="#chapter-2"><span class="lbl">Next (Locked)</span><span class="ttl">Python Fundamentals I →</span></a>
     </div></section>
 
-<section class="chapter" id="chapter-2" data-nav-title="Chapter 2: Variables, Types &amp; Operators">
-  <header class="chapter-head accent-indigo">
-    <div class="chapter-num">02</div>
-    <div>
-      <div class="kicker">WEEK 1 · PYTHON FUNDAMENTALS I</div>
-      <h2>Variables, Types &amp; Operators</h2>
-      <p class="chapter-sub">The building blocks every Python script is made of. We'll represent one BrightCart order in code and never let go of that example.</p>
+<div class="locked-chapter" id="chapter-2" data-nav-title="Chapter 2: Variables, Types &amp; Operators (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 1 · LOCKED</div>
+        <h2 style="font-size:24px;">Variables, Types &amp; Operators</h2>
+        <p class="chapter-sub">The building blocks every Python script is made of. We'll represent one BrightCart order in code and never let go of that example.</p>
+      </div>
     </div>
-  </header>
-<article class="lesson" id="what-is-variable" data-nav-title="What Is a Variable?">
-  <div class="lesson-head"><h3>What Is a Variable?</h3></div><p>A variable is a <strong>labeled box in your computer's memory</strong>. You put a value inside it, and you use the label to find that value again later. In Python you create one with a single equals sign — there's no need to declare a type up front, Python figures that out for you (this is called <strong>dynamic typing</strong>).</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>representing one row from customers.csv as variables</span></div><pre><code>customer_id = <span class="c-str">"C001"</span>
-customer_name = <span class="c-str">"Ana Dela Cruz"</span>
-order_total = <span class="c-num">792.34</span>
-is_paid = <span class="c-kw">True</span>
-
-<span class="c-fn">print</span>(customer_name)   <span class="c-cmt"># Output: Ana Dela Cruz</span></code></pre></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">Read `=` as "gets set to", not "equals"</p><div class="callout-body">In math, <code>x = 5</code> is a statement of fact. In Python, <code>customer_id = "C001"</code> is an instruction: <em>take the value on the right, and store it in the box named on the left.</em> That's why <code>count = count + 1</code> makes perfect sense in code but none in algebra.</div></div>
-</div></article><article class="lesson" id="naming-rules" data-nav-title="Variable Naming Rules">
-  <div class="lesson-head"><h3>Variable Naming Rules</h3></div><p>Python is strict about what a variable name can look like, and the community is strict about what it *should* look like. Both matter — one crashes your program, the other makes your code readable to the next engineer (often future-you).</p><div class="table-wrap"><table><thead><tr><th>Rule</th><th>Example</th></tr></thead><tbody><tr><td><strong style='color:#34d399'>✓ snake_case (recommended)</strong></td><td><code>customer_id</code>, <code>total_sales</code></td></tr><tr><td><strong style='color:#f87171'>✗ No spaces</strong></td><td><code>customer id</code> — this crashes</td></tr><tr><td><strong style='color:#f87171'>✗ No leading numbers</strong></td><td><code>1st_order</code> — this crashes</td></tr><tr><td><strong style='color:#fbbf24'>⚠ Case sensitive</strong></td><td><code>Total</code> and <code>total</code> are different variables</td></tr></tbody></table></div></article><article class="lesson" id="data-types" data-nav-title="Core Data Types">
-  <div class="lesson-head"><h3>Core Data Types</h3></div><p>Every value in Python has a type, and the type decides what you're allowed to do with it — you can add two numbers, but adding a number to text will raise an error. These four types cover the vast majority of what you'll touch in this bootcamp.</p><div class="table-wrap"><table><thead><tr><th>Type</th><th>Description</th><th>BrightCart example</th></tr></thead><tbody><tr><td><code>str</code> (string)</td><td>Text, always in quotes</td><td><code>"Manila"</code></td></tr><tr><td><code>int</code> (integer)</td><td>Whole numbers</td><td><code>1001</code> &nbsp;(an order_id)</td></tr><tr><td><code>float</code></td><td>Decimal numbers</td><td><code>24.99</code> &nbsp;(a unit_price)</td></tr><tr><td><code>bool</code> (boolean)</td><td>True or False</td><td><code>True</code> &nbsp;(is_paid)</td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>use type() any time you're unsure what you're working with</span></div><pre><code>order_id = <span class="c-num">1001</span>            <span class="c-cmt"># int</span>
-customer_city = <span class="c-str">"Manila"</span>   <span class="c-cmt"># str</span>
-unit_price = <span class="c-num">24.99</span>         <span class="c-cmt"># float</span>
-is_paid = <span class="c-kw">True</span>              <span class="c-cmt"># bool</span>
-
-<span class="c-fn">print</span>(<span class="c-fn">type</span>(unit_price))    <span class="c-cmt"># &lt;class 'float'&gt;</span></code></pre></div></article><article class="lesson" id="type-casting" data-nav-title="Type Casting: Input Is Always Text">
-  <div class="lesson-head"><h3>Type Casting: Input Is Always Text</h3></div><p>This trips up nearly every beginner exactly once: Python's <code>input()</code> function <strong>always</strong> returns a string, even if the person types a number. If you try to do math on it directly, Python either crashes or does something you didn't expect.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>the beginner trap</span></div><pre><code>qty = <span class="c-fn">input</span>(<span class="c-str">"Quantity: "</span>)   <span class="c-cmt"># user types: 3</span>
-total = qty * <span class="c-num">10</span>
-<span class="c-cmt"># qty is the STRING "3", not the number 3</span>
-<span class="c-cmt"># Python repeats the text instead of doing math:</span>
-<span class="c-fn">print</span>(total)   <span class="c-cmt"># "333333333333333333333333333333"</span></code></pre></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>the fix — wrap input() in int() or float()</span></div><pre><code>qty = <span class="c-fn">int</span>(<span class="c-fn">input</span>(<span class="c-str">"Quantity: "</span>))   <span class="c-cmt"># convert to int immediately</span>
-total = qty * <span class="c-num">10</span>
-<span class="c-fn">print</span>(total)   <span class="c-cmt"># 30</span></code></pre></div><div class="table-wrap"><table><thead><tr><th>Function</th><th>Converts to</th></tr></thead><tbody><tr><td><code>int(x)</code></td><td>whole number</td></tr><tr><td><code>float(x)</code></td><td>decimal number</td></tr><tr><td><code>str(x)</code></td><td>text</td></tr></tbody></table></div></article><article class="lesson" id="operators" data-nav-title="Operators: Doing Things With Values">
-  <div class="lesson-head"><h3>Operators: Doing Things With Values</h3></div><p>Operators are the symbols that combine values — arithmetic for math, comparisons for true/false questions, and logical operators for combining multiple conditions.</p><div class="table-wrap"><table><thead><tr><th>Category</th><th>Operators</th><th>Example (BrightCart order_items)</th></tr></thead><tbody><tr><td>Arithmetic</td><td><code>+ - * / // % **</code></td><td><code>quantity * unit_price</code></td></tr><tr><td>Comparison</td><td><code>== != &gt; &lt; &gt;= &lt;=</code></td><td><code>status == "paid"</code></td></tr><tr><td>Logical</td><td><code>and</code>, <code>or</code>, <code>not</code></td><td><code>status == "paid" and amount &gt; 100</code></td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>computing one order_items line total</span></div><pre><code>quantity = <span class="c-num">2</span>
-unit_price = <span class="c-num">24.99</span>
-line_total = quantity * unit_price
-<span class="c-fn">print</span>(line_total)          <span class="c-cmt"># 49.98</span>
-
-is_big_order = line_total &gt; <span class="c-num">40</span> <span class="c-kw">and</span> quantity &gt;= <span class="c-num">2</span>
-<span class="c-fn">print</span>(is_big_order)        <span class="c-cmt"># True</span></code></pre></div><div class="callout callout-mistake">
-  <div class="callout-icon"><i class="fa-solid fa-bug"></i></div>
-  <div><p class="callout-title">`=` vs `==`</p><div class="callout-body"><code>=</code> assigns a value. <code>==</code> asks "are these equal?" and returns True/False. Mixing them up (<code>if status = "paid":</code>) is a syntax error in Python — which is actually a mercy; some languages let this typo through silently and cause much worse bugs.</div></div>
-</div></article><article class="lesson" id="strings" data-nav-title="Working With Strings">
-  <div class="lesson-head"><h3>Working With Strings</h3></div><p>Text data from the real world is almost never clean — extra spaces, inconsistent capitalization, stray characters. String methods are the tools you'll reach for constantly, both here and later when cleaning BrightCart's messier exports in Phase 2.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>string methods you'll use constantly</span></div><pre><code>city = <span class="c-str">"  manila  "</span>
-
-<span class="c-fn">print</span>(city.<span class="c-fn">strip</span>())        <span class="c-cmt"># "manila"        (removes leading/trailing spaces)</span>
-<span class="c-fn">print</span>(city.<span class="c-fn">strip</span>().<span class="c-fn">title</span>())<span class="c-cmt"># "Manila"        (capitalizes each word)</span>
-<span class="c-fn">print</span>(city.<span class="c-fn">upper</span>())        <span class="c-cmt"># "  MANILA  "</span>
-<span class="c-fn">print</span>(city.<span class="c-fn">lower</span>())        <span class="c-cmt"># "  manila  "</span>
-
-name = <span class="c-str">"Ana"</span> + <span class="c-str">" "</span> + <span class="c-str">"Dela Cruz"</span>
-<span class="c-fn">print</span>(name)                 <span class="c-cmt"># "Ana Dela Cruz"   (+ joins/concatenates strings)</span>
-
-email = <span class="c-str">"ana.delacruz@brightmail.com"</span>
-<span class="c-fn">print</span>(email.<span class="c-fn">split</span>(<span class="c-str">"@"</span>))    <span class="c-cmt"># ['ana.delacruz', 'brightmail.com']</span>
-
-<span class="c-cmt"># f-strings: the modern way to build text with variables inside</span>
-<span class="c-fn">print</span>(f<span class="c-str">"{name} spent ${line_total}"</span>)</code></pre></div><div class="table-wrap"><table><thead><tr><th>Method</th><th>What it does</th></tr></thead><tbody><tr><td><code>.strip()</code></td><td>removes leading/trailing whitespace</td></tr><tr><td><code>.upper()</code> / <code>.lower()</code></td><td>changes case</td></tr><tr><td><code>.title()</code></td><td>capitalizes each word</td></tr><tr><td><code>.split(sep)</code></td><td>breaks a string into a list on a separator</td></tr><tr><td><code>.replace(old, new)</code></td><td>swaps one substring for another</td></tr></tbody></table></div></article><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 2 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Create variables of type <code>str</code>, <code>int</code>, <code>float</code>, and <code>bool</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Explain why <code>input()</code> needs <code>int()</code> or <code>float()</code> around it for math</span></li><li><i class="fa-solid fa-square-check"></i><span>Use <code>+ - * /</code> and comparison operators correctly</span></li><li><i class="fa-solid fa-square-check"></i><span>Clean a messy string using <code>.strip()</code>, <code>.title()</code>, or <code>.lower()</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Build a sentence with an f-string like <code>f"{name} spent {total}"</code></span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-1"><span class="lbl">Back</span><span class="ttl">Dev Environment Setup</span></a>
-      <a class="next" href="#chapter-3"><span class="lbl">Next</span><span class="ttl">Control Flow &amp; Data Structures →</span></a>
-    </div></section>
-<section class="chapter" id="chapter-3" data-nav-title="Chapter 3: Control Flow &amp; Data Structures">
-  <header class="chapter-head accent-indigo">
-    <div class="chapter-num">03</div>
-    <div>
-      <div class="kicker">WEEK 1 · PYTHON FUNDAMENTALS II</div>
-      <h2>Control Flow &amp; Data Structures</h2>
-      <p class="chapter-sub">How to make decisions, repeat work, and hold more than one value at a time — the tools that turn single-line scripts into real programs.</p>
-    </div>
-  </header>
-<article class="lesson" id="conditionals" data-nav-title="Conditionals: if / elif / else">
-  <div class="lesson-head"><h3>Conditionals: if / elif / else</h3></div><p>Conditionals let your code make decisions. Python checks each condition top to bottom and runs the <strong>first</strong> block that evaluates to True — everything else is skipped.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>classifying one BrightCart order</span></div><pre><code>status = <span class="c-str">"paid"</span>
-amount = <span class="c-num">792.34</span>
-
-<span class="c-kw">if</span> status == <span class="c-str">"cancelled"</span>:
-    <span class="c-fn">print</span>(<span class="c-str">"No action needed"</span>)
-<span class="c-kw">elif</span> status == <span class="c-str">"paid"</span> <span class="c-kw">and</span> amount &gt;= <span class="c-num">500</span>:
-    <span class="c-fn">print</span>(<span class="c-str">"VIP order — flag for priority shipping"</span>)
-<span class="c-kw">elif</span> status == <span class="c-str">"paid"</span>:
-    <span class="c-fn">print</span>(<span class="c-str">"Standard paid order"</span>)
-<span class="c-kw">else</span>:
-    <span class="c-fn">print</span>(<span class="c-str">"Needs follow-up: "</span> + status)</code></pre></div><div class="callout callout-warning">
-  <div class="callout-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-  <div><p class="callout-title">Indentation is not optional</p><div class="callout-body">Python uses indentation (4 spaces, consistently) to know what's <em>inside</em> an <code>if</code> block and what isn't. Mixing tabs and spaces is one of the most common beginner errors — configure VS Code to insert spaces when you press Tab (it does this by default for Python files).</div></div>
-</div></article><article class="lesson" id="loops" data-nav-title="Loops: for and while">
-  <div class="lesson-head"><h3>Loops: for and while</h3></div><p>A <code>for</code> loop repeats code once per item in a collection — the workhorse of data engineering, since almost everything you process is a list of records. A <code>while</code> loop repeats until a condition becomes False, useful when you don't know in advance how many times you'll need to run.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>for loop — summing a list of order amounts</span></div><pre><code>order_amounts = [<span class="c-num">792.34</span>, <span class="c-num">59.99</span>, <span class="c-num">218.00</span>, <span class="c-num">38.97</span>]
-
-total = <span class="c-num">0</span>
-<span class="c-kw">for</span> amount <span class="c-kw">in</span> order_amounts:
-    total = total + amount
-
-<span class="c-fn">print</span>(f<span class="c-str">"Total revenue: {total}"</span>)   <span class="c-cmt"># Total revenue: 1109.3</span></code></pre></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>while loop — a pattern you'll reuse for API pagination in Week 2</span></div><pre><code>page = <span class="c-num">1</span>
-has_more_pages = <span class="c-kw">True</span>
-
-<span class="c-kw">while</span> has_more_pages:
-    <span class="c-fn">print</span>(f<span class="c-str">"Fetching page {page}..."</span>)
-    <span class="c-kw">if</span> page == <span class="c-num">3</span>:              <span class="c-cmt"># pretend the API told us this was the last page</span>
-        has_more_pages = <span class="c-kw">False</span>
-    page += <span class="c-num">1</span>                  <span class="c-cmt"># same as: page = page + 1</span></code></pre></div><div class="callout callout-mistake">
-  <div class="callout-icon"><i class="fa-solid fa-bug"></i></div>
-  <div><p class="callout-title">The infinite loop</p><div class="callout-body">A <code>while</code> loop with a condition that never becomes False will run forever and freeze your program. Always make sure something inside the loop moves you toward the exit condition — in the example above, that's <code>page += 1</code>.</div></div>
-</div></article><article class="lesson" id="lists" data-nav-title="Lists: An Ordered Collection">
-  <div class="lesson-head"><h3>Lists: An Ordered Collection</h3></div><p>A list holds multiple values in one variable, in order, accessed by position (starting at <code>0</code>, not 1 — this catches everyone once). Lists are the closest thing Python has to a spreadsheet column, and you'll use them constantly before you meet pandas in Phase 2.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>lists — the last line is a list comprehension, a compact filter (optional, come back to this later if it's confusing)</span></div><pre><code>cities = [<span class="c-str">"Manila"</span>, <span class="c-str">"Cebu City"</span>, <span class="c-str">"Davao City"</span>, <span class="c-str">"Singapore"</span>]
-
-<span class="c-fn">print</span>(cities[<span class="c-num">0</span>])          <span class="c-cmt"># "Manila"    &lt;- index 0 is the FIRST item</span>
-<span class="c-fn">print</span>(cities[-<span class="c-num">1</span>])         <span class="c-cmt"># "Singapore" &lt;- -1 is the LAST item</span>
-<span class="c-fn">print</span>(<span class="c-fn">len</span>(cities))        <span class="c-cmt"># 4</span>
-
-cities.<span class="c-fn">append</span>(<span class="c-str">"Tokyo"</span>)    <span class="c-cmt"># add to the end</span>
-<span class="c-fn">print</span>(cities)             <span class="c-cmt"># ['Manila', 'Cebu City', 'Davao City', 'Singapore', 'Tokyo']</span>
-
-philippine_cities = [c <span class="c-kw">for</span> c <span class="c-kw">in</span> cities <span class="c-kw">if</span> c != <span class="c-str">"Singapore"</span> <span class="c-kw">and</span> c != <span class="c-str">"Tokyo"</span>]
-<span class="c-fn">print</span>(philippine_cities)  <span class="c-cmt"># ['Manila', 'Cebu City', 'Davao City']</span></code></pre></div></article><article class="lesson" id="dictionaries" data-nav-title="Dictionaries: Labeled Data">
-  <div class="lesson-head"><h3>Dictionaries: Labeled Data</h3></div><p>A dictionary stores <strong>key–value pairs</strong> instead of positions — this is how you'll represent one row of a table before pandas does it for you automatically. If a list is a column, a dictionary is closer to a single record.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>dictionaries — one BrightCart order as a record</span></div><pre><code>order = {
-    <span class="c-str">"order_id"</span>: <span class="c-num">1001</span>,
-    <span class="c-str">"customer"</span>: <span class="c-str">"Ana Dela Cruz"</span>,
-    <span class="c-str">"amount"</span>: <span class="c-num">792.34</span>,
-    <span class="c-str">"status"</span>: <span class="c-str">"paid"</span>
-}
-
-<span class="c-fn">print</span>(order[<span class="c-str">"customer"</span>])       <span class="c-cmt"># "Ana Dela Cruz"</span>
-<span class="c-fn">print</span>(order.<span class="c-fn">get</span>(<span class="c-str">"status"</span>))     <span class="c-cmt"># "paid"</span>
-<span class="c-fn">print</span>(order.<span class="c-fn">get</span>(<span class="c-str">"discount"</span>, <span class="c-num">0</span>))  <span class="c-cmt"># 0  &lt;- .get() with a default avoids a crash if the key is missing</span>
-
-order[<span class="c-str">"shipped"</span>] = <span class="c-kw">True</span>        <span class="c-cmt"># add a new key</span>
-<span class="c-fn">print</span>(order.<span class="c-fn">keys</span>())            <span class="c-cmt"># dict_keys(['order_id', 'customer', 'amount', 'status', 'shipped'])</span></code></pre></div><p>A <strong>list of dictionaries</strong> is exactly how you'll represent a whole table — and it's exactly the shape a JSON API response usually arrives in, which is why this pattern matters so much.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>a list of dictionaries = a small table</span></div><pre><code>orders = [
-    {<span class="c-str">"order_id"</span>: <span class="c-num">1001</span>, <span class="c-str">"customer"</span>: <span class="c-str">"Ana Dela Cruz"</span>, <span class="c-str">"amount"</span>: <span class="c-num">792.34</span>, <span class="c-str">"status"</span>: <span class="c-str">"paid"</span>},
-    {<span class="c-str">"order_id"</span>: <span class="c-num">1002</span>, <span class="c-str">"customer"</span>: <span class="c-str">"Ben Santos"</span>,    <span class="c-str">"amount"</span>: <span class="c-num">59.99</span>,  <span class="c-str">"status"</span>: <span class="c-str">"paid"</span>},
-    {<span class="c-str">"order_id"</span>: <span class="c-num">1004</span>, <span class="c-str">"customer"</span>: <span class="c-str">"Carlo Reyes"</span>,   <span class="c-str">"amount"</span>: <span class="c-num">38.97</span>,  <span class="c-str">"status"</span>: <span class="c-str">"pending"</span>},
-]
-
-paid_total = <span class="c-num">0</span>
-<span class="c-kw">for</span> o <span class="c-kw">in</span> orders:
-    <span class="c-kw">if</span> o[<span class="c-str">"status"</span>] == <span class="c-str">"paid"</span>:
-        paid_total += o[<span class="c-str">"amount"</span>]
-
-<span class="c-fn">print</span>(f<span class="c-str">"Paid revenue: {paid_total}"</span>)   <span class="c-cmt"># Paid revenue: 852.33</span></code></pre></div></article><article class="lesson" id="tuples-sets" data-nav-title="Tuples &amp; Sets (Brief)">
-  <div class="lesson-head"><h3>Tuples &amp; Sets (Brief)</h3></div><p>Two more collection types worth recognizing, even if you'll reach for them less often than lists and dictionaries.</p><div class="table-wrap"><table><thead><tr><th>Type</th><th>Ordered?</th><th>Can change after creation?</th><th>Duplicates allowed?</th><th>Written as</th></tr></thead><tbody><tr><td>list</td><td>Yes</td><td>Yes</td><td>Yes</td><td><code>[1, 2, 3]</code></td></tr><tr><td>tuple</td><td>Yes</td><td><strong>No</strong></td><td>Yes</td><td><code>(1, 2, 3)</code></td></tr><tr><td>set</td><td>No</td><td>Yes</td><td><strong>No</strong></td><td><code>{1, 2, 3}</code></td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>a classic use of set(): finding distinct values, before you learn SQL's DISTINCT</span></div><pre><code>payment_methods = [<span class="c-str">"gcash"</span>, <span class="c-str">"credit_card"</span>, <span class="c-str">"gcash"</span>, <span class="c-str">"paypal"</span>, <span class="c-str">"gcash"</span>]
-
-unique_methods = <span class="c-fn">set</span>(payment_methods)
-<span class="c-fn">print</span>(unique_methods)     <span class="c-cmt"># {'gcash', 'credit_card', 'paypal'}  -- duplicates gone</span></code></pre></div></article><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 3 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Write an <code>if / elif / else</code> chain that checks multiple conditions</span></li><li><i class="fa-solid fa-square-check"></i><span>Write a <code>for</code> loop that sums values from a list</span></li><li><i class="fa-solid fa-square-check"></i><span>Explain why a <code>while</code> loop needs something that changes each time it runs</span></li><li><i class="fa-solid fa-square-check"></i><span>Access a list item by index, including negative indexing</span></li><li><i class="fa-solid fa-square-check"></i><span>Build a dictionary representing one record, and a list of dictionaries representing a small table</span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-2"><span class="lbl">Back</span><span class="ttl">Variables, Types &amp; Operators</span></a>
-      <a class="next" href="#chapter-4"><span class="lbl">Next</span><span class="ttl">Functions, Files &amp; APIs →</span></a>
-    </div></section>
-<section class="chapter" id="chapter-4" data-nav-title="Chapter 4: Functions, Files &amp; Your First Data Extraction">
-  <header class="chapter-head accent-indigo">
-    <div class="chapter-num">04</div>
-    <div>
-      <div class="kicker">WEEK 1–2 · PYTHON FUNDAMENTALS III</div>
-      <h2>Functions, Files &amp; Your First Data Extraction</h2>
-      <p class="chapter-sub">Functions turn repeated code into reusable tools. Files and APIs are how real data gets into your programs in the first place.</p>
-    </div>
-  </header>
-<article class="lesson" id="functions" data-nav-title="Functions: Reusable Blocks of Logic">
-  <div class="lesson-head"><h3>Functions: Reusable Blocks of Logic</h3></div><p>A function is a named, reusable block of code. Instead of retyping the same logic for every order, you write it once, give it a name, and <strong>call</strong> it as many times as you need with different inputs (called <strong>parameters</strong> or <strong>arguments</strong>).</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>anatomy of a function: def, parameters, a default value, and return</span></div><pre><code><span class="c-kw">def</span> <span class="c-fn">calculate_line_total</span>(quantity, unit_price):
-    <span class="c-kw">return</span> quantity * unit_price
-
-<span class="c-cmt"># call it as many times as you need:</span>
-<span class="c-fn">print</span>(<span class="c-fn">calculate_line_total</span>(<span class="c-num">2</span>, <span class="c-num">24.99</span>))   <span class="c-cmt"># 49.98</span>
-<span class="c-fn">print</span>(<span class="c-fn">calculate_line_total</span>(<span class="c-num">1</span>, <span class="c-num">129.00</span>))  <span class="c-cmt"># 129.0</span>
-
-<span class="c-kw">def</span> <span class="c-fn">classify_order</span>(amount, threshold=<span class="c-num">500</span>):
-    <span class="c-str">""</span><span class="c-str">"threshold has a DEFAULT value -- callers can override it or skip it"</span><span class="c-str">""</span>
-    <span class="c-kw">if</span> amount &gt;= threshold:
-        <span class="c-kw">return</span> <span class="c-str">"VIP"</span>
-    <span class="c-kw">return</span> <span class="c-str">"standard"</span>
-
-<span class="c-fn">print</span>(<span class="c-fn">classify_order</span>(<span class="c-num">792.34</span>))         <span class="c-cmt"># "VIP"       (uses default threshold=500)</span>
-<span class="c-fn">print</span>(<span class="c-fn">classify_order</span>(<span class="c-num">300</span>, <span class="c-num">250</span>))       <span class="c-cmt"># "VIP"       (override: threshold=250)</span></code></pre></div><div class="table-wrap"><table><thead><tr><th>Part</th><th>What it means</th></tr></thead><tbody><tr><td><code>def</code></td><td>keyword that starts a function definition</td></tr><tr><td><code>calculate_line_total</code></td><td>the function's name — use a verb, describe what it does</td></tr><tr><td><code>(quantity, unit_price)</code></td><td>parameters — the inputs the function expects</td></tr><tr><td><code>return</code></td><td>sends a value back to whoever called the function</td></tr></tbody></table></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">A good function does one thing</p><div class="callout-body">If you find yourself describing a function with "and" (<em>"it calculates the total <strong>and</strong> prints a receipt <strong>and</strong> saves to a file"</em>), split it into three functions. Small, single-purpose functions are dramatically easier to test and reuse — this habit pays off enormously once you're writing ETL pipelines in Phase 2.</div></div>
-</div></article><article class="lesson" id="errors" data-nav-title="Handling Errors: try / except">
-  <div class="lesson-head"><h3>Handling Errors: try / except</h3></div><p>Real data is unpredictable — a field might be blank, a file might not exist, an API might time out. <code>try</code> / <code>except</code> lets your program catch an error and respond sensibly instead of crashing.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>skip bad values instead of letting one bad row kill the whole script</span></div><pre><code>raw_quantities = [<span class="c-str">"2"</span>, <span class="c-str">"3"</span>, <span class="c-str">"N/A"</span>, <span class="c-str">"1"</span>]
-
-total_units = <span class="c-num">0</span>
-<span class="c-kw">for</span> q <span class="c-kw">in</span> raw_quantities:
-    <span class="c-kw">try</span>:
-        total_units += <span class="c-fn">int</span>(q)
-    <span class="c-kw">except</span> ValueError:
-        <span class="c-fn">print</span>(f<span class="c-str">"Skipping bad value: {q!r}"</span>)
-
-<span class="c-fn">print</span>(total_units)   <span class="c-cmt"># 6  (the 'N/A' was skipped, not crashed on)</span></code></pre></div><div class="callout callout-mistake">
-  <div class="callout-icon"><i class="fa-solid fa-bug"></i></div>
-  <div><p class="callout-title">Don't catch every error blindly</p><div class="callout-body">A bare <code>except:</code> (with no error type) silently swallows <em>everything</em>, including bugs in your own code — making them nearly impossible to find. Always name the error you expect, like <code>except ValueError:</code>.</div></div>
-</div></article><div class="project-box">
-  <div class="project-head"><span class="project-tag">WEEK 1</span><span class="project-label">PORTFOLIO PROJECT</span></div>
-  <h4>Portfolio Project — BrightCart Order Total Calculator</h4>
-  <p>None</p>
-  <ul class="project-bullets"><li>Write a function <code>calculate_line_total(quantity, unit_price)</code> that returns the line total.</li><li>Write a function <code>classify_order(amount)</code> that returns <code>"VIP"</code> for totals ≥ 500 and <code>"standard"</code> otherwise.</li><li>Build a small command-line loop using <code>input()</code> that lets a user enter a quantity and price, prints the total, and asks "Add another item? (y/n)" until they say no.</li><li>Print a final receipt-style summary and commit the script as <code>order_calculator.py</code>.</li></ul>
-</div><article class="lesson" id="reading-files" data-nav-title="Reading &amp; Writing CSV Files">
-  <div class="lesson-head"><h3>Reading &amp; Writing CSV Files</h3></div><p>Before pandas (Phase 2) makes this effortless, it's worth understanding what's actually happening: a CSV file is plain text with commas separating values, and Python's built-in <code>csv</code> module turns each line into a list — or, with <code>DictReader</code>, into a dictionary using the header row as keys.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>reading customers.csv with csv.DictReader — each row becomes a dictionary</span></div><pre><code><span class="c-kw">import</span> csv
-
-<span class="c-kw">with</span> <span class="c-fn">open</span>(<span class="c-str">"data/customers.csv"</span>, <span class="c-str">"r"</span>) <span class="c-kw">as</span> f:
-    reader = csv.<span class="c-fn">DictReader</span>(f)
-    <span class="c-kw">for</span> row <span class="c-kw">in</span> reader:
-        <span class="c-fn">print</span>(row[<span class="c-str">"first_name"</span>], row[<span class="c-str">"city"</span>])
-
-<span class="c-cmt"># Ana Manila</span>
-<span class="c-cmt"># Ben Cebu City</span>
-<span class="c-cmt"># Carlo Davao City</span>
-<span class="c-cmt"># ...</span></code></pre></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>writing a new CSV file — the pattern you'll reuse for every pipeline's output</span></div><pre><code><span class="c-kw">import</span> csv
-
-vip_customers = [
-    {<span class="c-str">"customer_id"</span>: <span class="c-num">1</span>, <span class="c-str">"customer_name"</span>: <span class="c-str">"Ana Dela Cruz"</span>, <span class="c-str">"total_spent"</span>: <span class="c-num">792.34</span>},
-    {<span class="c-str">"customer_id"</span>: <span class="c-num">12</span>, <span class="c-str">"customer_name"</span>: <span class="c-str">"Liam Brooks"</span>, <span class="c-str">"total_spent"</span>: <span class="c-num">476.00</span>},
-]
-
-<span class="c-kw">with</span> <span class="c-fn">open</span>(<span class="c-str">"data/vip_customers.csv"</span>, <span class="c-str">"w"</span>, newline=<span class="c-str">""</span>) <span class="c-kw">as</span> f:
-    writer = csv.<span class="c-fn">DictWriter</span>(f, fieldnames=[<span class="c-str">"customer_id"</span>, <span class="c-str">"customer_name"</span>, <span class="c-str">"total_spent"</span>])
-    writer.<span class="c-fn">writeheader</span>()
-    writer.<span class="c-fn">writerows</span>(vip_customers)</code></pre></div><div class="callout callout-note">
-  <div class="callout-icon"><i class="fa-solid fa-circle-info"></i></div>
-  <div><p class="callout-title">with open(...) as f:</p><div class="callout-body">The <code>with</code> keyword automatically closes the file when you're done with it, even if an error happens inside the block. Always use <code>with open(...)</code> instead of a bare <code>open(...)</code> — it's the difference between a script that occasionally corrupts files and one that never does.</div></div>
-</div></article><article class="lesson" id="json-apis" data-nav-title="Working With JSON &amp; APIs">
-  <div class="lesson-head"><h3>Working With JSON &amp; APIs</h3></div><p>JSON (JavaScript Object Notation) is the format almost every API speaks — and it maps directly onto Python dictionaries and lists, which is exactly why you learned those first. An API is just a website's URL that returns data instead of a webpage.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>a JSON order record — notice it's basically a Python dict with a list inside it</span></div><pre><code>{
-  <span class="c-str">"order_id"</span>: <span class="c-num">1001</span>,
-  <span class="c-str">"customer"</span>: <span class="c-str">"Ana Dela Cruz"</span>,
-  <span class="c-str">"items"</span>: [
-    {<span class="c-str">"product"</span>: <span class="c-str">"Wireless Mouse"</span>, <span class="c-str">"quantity"</span>: <span class="c-num">2</span>},
-    {<span class="c-str">"product"</span>: <span class="c-str">"Water Bottle"</span>, <span class="c-str">"quantity"</span>: <span class="c-num">1</span>}
-  ],
-  <span class="c-str">"status"</span>: <span class="c-str">"paid"</span>
-}</code></pre></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>json.load() turns JSON text into Python dictionaries/lists automatically</span></div><pre><code><span class="c-kw">import</span> json
-
-<span class="c-kw">with</span> <span class="c-fn">open</span>(<span class="c-str">"data/order_1001.json"</span>) <span class="c-kw">as</span> f:
-    order = json.<span class="c-fn">load</span>(f)     <span class="c-cmt"># JSON text -&gt; Python dict</span>
-
-<span class="c-fn">print</span>(order[<span class="c-str">"customer"</span>])            <span class="c-cmt"># "Ana Dela Cruz"</span>
-<span class="c-kw">for</span> item <span class="c-kw">in</span> order[<span class="c-str">"items"</span>]:
-    <span class="c-fn">print</span>(item[<span class="c-str">"product"</span>], item[<span class="c-str">"quantity"</span>])</code></pre></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>requests — the standard library for calling real APIs (install with: pip install requests)</span></div><pre><code><span class="c-kw">import</span> requests
-
-response = requests.<span class="c-fn">get</span>(<span class="c-str">"https://api.example.com/orders"</span>, timeout=<span class="c-num">30</span>)
-response.<span class="c-fn">raise_for_status</span>()   <span class="c-cmt"># crash loudly if the request failed, instead of silently continuing</span>
-
-data = response.<span class="c-fn">json</span>()        <span class="c-cmt"># parses JSON straight into a Python dict/list</span>
-<span class="c-fn">print</span>(data[<span class="c-num">0</span>][<span class="c-str">"customer"</span>])</code></pre></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">Always set a timeout</p><div class="callout-body">Without <code>timeout=30</code>, a stalled server can freeze your script forever with no error at all. This one keyword argument will save you a genuinely confusing debugging session down the road.</div></div>
-</div></article><div class="project-box">
-  <div class="project-head"><span class="project-tag">WEEK 2</span><span class="project-label">PORTFOLIO PROJECT</span></div>
-  <h4>Portfolio Project — BrightCart Order Extractor</h4>
-  <p>None</p>
-  <ul class="project-bullets"><li>Write a function <code>load_orders_csv(path)</code> that reads <code>orders.csv</code> with <code>csv.DictReader</code> and returns a list of dictionaries.</li><li>Write a function <code>summarize_by_status(orders)</code> that counts how many orders fall into each <code>status</code>.</li><li>Read one sample order as JSON (create a small <code>.json</code> file by hand) and print its item list.</li><li>Write the status summary out to a new file, <code>status_summary.csv</code>, using <code>csv.DictWriter</code>.</li><li>Commit the script as <code>order_extractor.py</code> — this is the direct ancestor of the ETL pipelines you'll build in Phase 2.</li></ul>
-</div><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 4 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Write a function with parameters, a default value, and a <code>return</code> statement</span></li><li><i class="fa-solid fa-square-check"></i><span>Explain why <code>try / except</code> is safer than letting a script crash on bad data</span></li><li><i class="fa-solid fa-square-check"></i><span>Read a CSV file into a list of dictionaries with <code>csv.DictReader</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Write a list of dictionaries out to a new CSV file with <code>csv.DictWriter</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Explain what JSON is and why <code>json.load()</code> turns it directly into Python dicts/lists</span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-3"><span class="lbl">Back</span><span class="ttl">Control Flow &amp; Data Structures</span></a>
-      <a class="next" href="#chapter-5"><span class="lbl">Next</span><span class="ttl">SQL Fundamentals →</span></a>
-    </div></section>
-
-<div class="enroll-cta">
-  <div>
-    <h4>Like learning this way?</h4>
-    <p>This is a free sample of our full 12-week live Data Engineering Bootcamp — with mentor code reviews, a cohort, and a capstone project.</p>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> What Is a Variable?</li>
+      <li><i class="fa-solid fa-lock"></i> Variable Naming Rules</li>
+      <li><i class="fa-solid fa-lock"></i> Core Data Types (str, int, float, bool)</li>
+      <li><i class="fa-solid fa-lock"></i> Type Casting: Input Is Always Text</li>
+      <li><i class="fa-solid fa-lock"></i> Operators: Doing Things With Values</li>
+      <li><i class="fa-solid fa-lock"></i> Working With Strings</li>
+    </ul>
   </div>
-  <a href="../index.html#bootcamps">See the Bootcamp</a>
 </div>
 
-<section class="chapter" id="chapter-5" data-nav-title="Chapter 5: Talking to a Database">
-  <header class="chapter-head accent-purple">
-    <div class="chapter-num">05</div>
-    <div>
-      <div class="kicker">WEEK 3 · SQL FUNDAMENTALS</div>
-      <h2>Talking to a Database</h2>
-      <p class="chapter-sub">SQL is how you ask a database questions. We'll load BrightCart into a real database and start asking it things.</p>
+<div class="locked-chapter" id="chapter-3" data-nav-title="Chapter 3: Control Flow &amp; Data Structures (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 1 · LOCKED</div>
+        <h2 style="font-size:24px;">Control Flow &amp; Data Structures</h2>
+        <p class="chapter-sub">How to make decisions, repeat work, and hold more than one value at a time — the tools that turn single-line scripts into real programs.</p>
+      </div>
     </div>
-  </header>
-<article class="lesson" id="what-is-rdbms" data-nav-title="What Is a Relational Database?">
-  <div class="lesson-head"><h3>What Is a Relational Database?</h3></div><p>A relational database stores data in <strong>tables</strong> — grids of rows and columns, like a spreadsheet, except tables can be linked together by shared ID columns (that's the "relational" part). PostgreSQL, MySQL, and SQLite are all RDBMS (Relational Database Management Systems) — programs that store and let you query this kind of data.</p><p>Python variables live only while your script runs. A database persists — BrightCart's orders stay there whether your laptop is on or off, and multiple programs (or people) can read and write to it at the same time. That durability and shareability is exactly why production systems use databases instead of just CSV files.</p></article><article class="lesson" id="tool-postgres" data-nav-title="Tool Spotlight: PostgreSQL">
-  <div class="lesson-head"><h3>Tool Spotlight: PostgreSQL</h3><span class="lesson-time"><i class="fa-regular fa-clock"></i> 20 min</span></div>
-<div class="tool-spotlight">
-  <div class="tool-spotlight-head">
-    <div class="tool-icon"><i class="fa-solid fa-elephant"></i></div>
-    <div>
-      <p class="tool-eyebrow">Tool Spotlight</p>
-      <h4>PostgreSQL ("Postgres")</h4>
-      <p class="tool-tagline">A free, open-source relational database — the one this entire bootcamp is built around.</p>
-    </div>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> Conditionals: if / elif / else</li>
+      <li><i class="fa-solid fa-lock"></i> Loops: for and while</li>
+      <li><i class="fa-solid fa-lock"></i> Lists: An Ordered Collection</li>
+      <li><i class="fa-solid fa-lock"></i> Dictionaries: Labeled Data</li>
+      <li><i class="fa-solid fa-lock"></i> Tuples &amp; Sets (Brief)</li>
+    </ul>
   </div>
-  <div class="tool-grid">
-    <div><p class="tool-label">What it is</p><p>PostgreSQL is a server program: it runs quietly in the background on your computer (or in the cloud, later in Phase 2) and listens for SQL commands from clients like the terminal, VS Code, or a Python script.</p></div>
-    <div><p class="tool-label">Why data engineers use it</p><p>It's free, it's what most real companies actually use for OLTP workloads, and everything you learn here — joins, window functions, indexes — transfers directly to Snowflake, BigQuery, and Redshift in Phase 2.</p></div>
-  </div>
-  <div class="tool-install">
-    <p class="tool-label">How to get it running</p>
-    <ol class="install-steps"><li><span class="step-badge">1</span><div>Go to <code>postgresql.org/download</code> and choose your OS (the Windows/Mac installer bundles pgAdmin, a GUI client, automatically).</div></li><li><span class="step-badge">2</span><div>During install you'll set a password for the default <code>postgres</code> user — write it down, you'll need it constantly.</div></li><li><span class="step-badge">3</span><div>Keep the default port, <code>5432</code>, unless something else is already using it.</div></li><li><span class="step-badge">4</span><div>Once installed, open a terminal and connect with <code>psql -U postgres</code> to confirm it's running.</div></li></ol>
-  </div>
-  <div class="tool-tryit"><p class="tool-tryit-label"><i class="fa-solid fa-terminal"></i> Try it</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>terminal — psql is Postgres's own command-line client</span></div><pre><code><span class="c-prompt">$</span> psql -U postgres
-Password for user postgres: ********
-psql (16.2)
-Type "help" for help.
-
-postgres=<span class="c-cmt"># CREATE DATABASE brightcart;</span>
-CREATE DATABASE
-postgres=<span class="c-cmt"># \q</span></code></pre></div></div>
-  <div class="tool-gotcha"><i class="fa-solid fa-triangle-exclamation"></i><div><strong>Common snag:</strong> "psql: command not found" usually means Postgres's <code>bin</code> folder isn't on your PATH. On Windows, search for "SQL Shell (psql)" in the Start Menu instead — it's installed alongside the database and skips the PATH issue entirely.</div></div>
-</div></article><article class="lesson" id="tool-client" data-nav-title="Tool Spotlight: A SQL Client (DBeaver / pgAdmin)">
-  <div class="lesson-head"><h3>Tool Spotlight: A SQL Client (DBeaver / pgAdmin)</h3><span class="lesson-time"><i class="fa-regular fa-clock"></i> 10 min</span></div>
-<div class="tool-spotlight">
-  <div class="tool-spotlight-head">
-    <div class="tool-icon"><i class="fa-solid fa-table"></i></div>
-    <div>
-      <p class="tool-eyebrow">Tool Spotlight</p>
-      <h4>DBeaver (or pgAdmin)</h4>
-      <p class="tool-tagline">A visual window into your database — browse tables, run queries, and see results in a grid.</p>
-    </div>
-  </div>
-  <div class="tool-grid">
-    <div><p class="tool-label">What it is</p><p>A SQL client is a GUI application that connects to a database server and lets you explore tables, write and run queries, and view results — without typing raw <code>psql</code> commands for everything.</p></div>
-    <div><p class="tool-label">Why data engineers use it</p><p>You'll write plenty of SQL directly, but a visual table browser makes it dramatically faster to sanity-check your data ("does this table actually have 45 rows like I expect?") before you write a single query.</p></div>
-  </div>
-  <div class="tool-install">
-    <p class="tool-label">How to get it running</p>
-    <ol class="install-steps"><li><span class="step-badge">1</span><div>Download DBeaver Community Edition (free) from <code>dbeaver.io</code> — it works with every database you'll meet in this bootcamp, not just Postgres.</div></li><li><span class="step-badge">2</span><div>Open DBeaver, click <strong>New Database Connection</strong>, choose <strong>PostgreSQL</strong>.</div></li><li><span class="step-badge">3</span><div>Enter host <code>localhost</code>, port <code>5432</code>, database <code>brightcart</code>, username <code>postgres</code>, and the password you set during install.</div></li><li><span class="step-badge">4</span><div>Click <strong>Test Connection</strong>, then <strong>Finish</strong>.</div></li></ol>
-  </div>
-
-  <div class="tool-gotcha"><i class="fa-solid fa-triangle-exclamation"></i><div><strong>Common snag:</strong> pgAdmin (bundled with the Postgres installer) does the same job and is a perfectly good alternative — use whichever one you already have open.</div></div>
-</div></article><article class="lesson" id="load-database" data-nav-title="Loading BrightCart Into Postgres">
-  <div class="lesson-head"><h3>Loading BrightCart Into Postgres</h3></div><p>Time to turn the <code>.sql</code> files from the Introduction into a real, queryable database. You'll run the schema file first (it creates empty tables) and then the seed file (it fills them with data).</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>terminal — run these from the folder containing the .sql files</span></div><pre><code><span class="c-prompt">$</span> psql -U postgres -d brightcart -f 01_schema.sql
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-
-<span class="c-prompt">$</span> psql -U postgres -d brightcart -f 02_seed_clean_data.sql
-INSERT 0 16
-INSERT 0 14
-INSERT 0 45
-INSERT 0 63</code></pre></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">Prefer clicking over typing?</p><div class="callout-body">In DBeaver or pgAdmin, you can instead open each <code>.sql</code> file and click "Execute Script" (not just "Execute" — that only runs one statement). Same result, different interface.</div></div>
-</div></article><article class="lesson" id="select-basics" data-nav-title="SELECT, WHERE, ORDER BY, LIMIT">
-  <div class="lesson-head"><h3>SELECT, WHERE, ORDER BY, LIMIT</h3></div><p>Every SQL query starts the same way: tell it <strong>what columns</strong> you want, <strong>from which table</strong>, <strong>which rows</strong> qualify, and <strong>how to sort</strong> the result. This one pattern answers most of the questions a business ever asks.</p><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>the 5 most fundamental keywords in SQL, in the order you'll type them</span></div><pre><code><span class="c-kw">SELECT</span> first_name, last_name, city
-<span class="c-kw">FROM</span> customers
-<span class="c-kw">WHERE</span> country = <span class="c-str">'Philippines'</span>
-<span class="c-kw">ORDER BY</span> city <span class="c-kw">ASC</span>
-<span class="c-kw">LIMIT</span> <span class="c-num">5</span>;</code></pre></div><div class="table-wrap"><table><thead><tr><th>Clause</th><th>What it does</th></tr></thead><tbody><tr><td><code>SELECT</code></td><td>which columns to return (or <code>*</code> for all of them)</td></tr><tr><td><code>FROM</code></td><td>which table to read</td></tr><tr><td><code>WHERE</code></td><td>filters rows <em>before</em> they're returned</td></tr><tr><td><code>ORDER BY</code></td><td>sorts the result — add <code>DESC</code> for descending</td></tr><tr><td><code>LIMIT</code></td><td>caps how many rows come back</td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>a realistic BrightCart question: "what's still waiting on us?"</span></div><pre><code><span class="c-cmt">-- Every order that is still pending, most recent first</span>
-<span class="c-kw">SELECT</span> order_id, order_date, payment_method
-<span class="c-kw">FROM</span> orders
-<span class="c-kw">WHERE</span> status = <span class="c-str">'pending'</span>
-<span class="c-kw">ORDER BY</span> order_date <span class="c-kw">DESC</span>;</code></pre></div><div class="callout callout-mistake">
-  <div class="callout-icon"><i class="fa-solid fa-bug"></i></div>
-  <div><p class="callout-title">SQL strings use single quotes</p><div class="callout-body"><code>WHERE status = "paid"</code> will error in Postgres — use single quotes for text: <code>WHERE status = 'paid'</code>. Double quotes in SQL mean something entirely different (they quote column/table <em>names</em>, not values).</div></div>
-</div></article><article class="lesson" id="aggregates" data-nav-title="Aggregate Functions &amp; GROUP BY">
-  <div class="lesson-head"><h3>Aggregate Functions &amp; GROUP BY</h3></div><p>Aggregate functions collapse many rows into one summary number — count, sum, average, min, max. <code>GROUP BY</code> is what lets you get one summary <strong>per category</strong> instead of one summary for the whole table.</p><div class="table-wrap"><table><thead><tr><th>Function</th><th>Returns</th></tr></thead><tbody><tr><td><code>COUNT(*)</code></td><td>number of rows</td></tr><tr><td><code>SUM(col)</code></td><td>total</td></tr><tr><td><code>AVG(col)</code></td><td>average</td></tr><tr><td><code>MIN(col)</code> / <code>MAX(col)</code></td><td>smallest / largest value</td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>how many orders are in each status?</span></div><pre><code><span class="c-kw">SELECT</span> status, <span class="c-kw">COUNT</span>(*) <span class="c-kw">AS</span> order_count
-<span class="c-kw">FROM</span> orders
-<span class="c-kw">GROUP BY</span> status
-<span class="c-kw">ORDER BY</span> order_count <span class="c-kw">DESC</span>;</code></pre></div><div class="table-wrap"><table><thead><tr><th>status</th><th>order_count</th></tr></thead><tbody><tr><td>paid</td><td>39</td></tr><tr><td>pending</td><td>3</td></tr><tr><td>cancelled</td><td>2</td></tr><tr><td>refunded</td><td>1</td></tr></tbody></table></div><div class="code-block"><div class="code-bar"><span class="code-dots"><i></i><i></i><i></i></span><span class=code-caption>HAVING filters groups AFTER aggregation — WHERE can't do this, it runs before grouping</span></div><pre><code><span class="c-cmt">-- Total revenue per payment method, but only for orders worth summarizing</span>
-<span class="c-kw">SELECT</span> payment_method,
-       <span class="c-kw">SUM</span>(quantity * unit_price) <span class="c-kw">AS</span> revenue,
-       <span class="c-kw">COUNT</span>(*) <span class="c-kw">AS</span> line_items
-<span class="c-kw">FROM</span> order_items oi
-<span class="c-kw">JOIN</span> orders o <span class="c-kw">ON</span> o.order_id = oi.order_id
-<span class="c-kw">WHERE</span> o.status = <span class="c-str">'paid'</span>
-<span class="c-kw">GROUP BY</span> payment_method
-<span class="c-kw">HAVING</span> <span class="c-kw">SUM</span>(quantity * unit_price) &gt; <span class="c-num">200</span>
-<span class="c-kw">ORDER BY</span> revenue <span class="c-kw">DESC</span>;</code></pre></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">WHERE vs HAVING</p><div class="callout-body"><code>WHERE</code> filters individual rows before grouping happens. <code>HAVING</code> filters the <em>groups</em> after <code>SUM</code>/<code>COUNT</code>/etc. have already been calculated. If your condition mentions an aggregate function, it has to go in <code>HAVING</code>.</div></div>
-</div></article><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 5 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Explain what a relational database is and why it's more durable than a CSV file</span></li><li><i class="fa-solid fa-square-check"></i><span>Load the BrightCart schema and seed data into a real Postgres database</span></li><li><i class="fa-solid fa-square-check"></i><span>Write a <code>SELECT ... WHERE ... ORDER BY ... LIMIT</code> query from memory</span></li><li><i class="fa-solid fa-square-check"></i><span>Use <code>COUNT</code>, <code>SUM</code>, and <code>AVG</code> with <code>GROUP BY</code></span></li><li><i class="fa-solid fa-square-check"></i><span>Explain the difference between <code>WHERE</code> and <code>HAVING</code></span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-4"><span class="lbl">Back</span><span class="ttl">Functions, Files &amp; APIs</span></a>
-      <a class="next" href="#chapter-6"><span class="lbl">Next</span><span class="ttl">Joins, Subqueries &amp; Window Functions →</span></a>
-    </div></section>
-<section class="chapter" id="chapter-6" data-nav-title="Chapter 6: Joins, Subqueries &amp; Window Functions">
-  <header class="chapter-head accent-purple">
-    <div class="chapter-num">06</div>
-    <div>
-      <div class="kicker">WEEK 3–4 · SQL DEEP DIVE</div>
-      <h2>Joins, Subqueries &amp; Window Functions</h2>
-      <p class="chapter-sub">Real BrightCart questions almost always need more than one table. This is how you combine them.</p>
-    </div>
-  </header>
-<article class="lesson" id="keys-erd" data-nav-title="Primary Keys, Foreign Keys &amp; the ERD">
-  <div class="lesson-head"><h3>Primary Keys, Foreign Keys &amp; the ERD</h3></div><p>A <strong>primary key</strong> uniquely identifies each row in a table (<code>customer_id</code> in <code>customers</code>). A <strong>foreign key</strong> is a column in one table that points at a primary key in another (<code>orders.customer_id</code> points at <code>customers.customer_id</code>). This is the entire mechanism that lets SQL connect tables together.</p></article><article class="lesson" id="joins" data-nav-title="JOIN Types">
-  <div class="lesson-head"><h3>JOIN Types</h3></div><p>A <code>JOIN</code> combines rows from two tables based on a matching column. Which rows survive when there isn't a match depends entirely on which join type you pick — this is the single most important SQL concept to get comfortable with.</p><div class="table-wrap"><table><thead><tr><th>Join type</th><th>Keeps...</th></tr></thead><tbody><tr><td><code>INNER JOIN</code></td><td>only rows that match in <strong>both</strong> tables</td></tr><tr><td><code>LEFT JOIN</code></td><td><strong>all</strong> rows from the left table, matched data if it exists, else NULL</td></tr><tr><td><code>RIGHT JOIN</code></td><td>all rows from the right table (rarely needed — just swap table order and use LEFT)</td></tr><tr><td><code>FULL JOIN</code></td><td>everything from both sides, matched where possible</td></tr></tbody></table></div><div class="callout callout-tip">
-  <div class="callout-icon"><i class="fa-solid fa-lightbulb"></i></div>
-  <div><p class="callout-title">The "find what's missing" pattern</p><div class="callout-body"><code>LEFT JOIN ... WHERE right_table.id IS NULL</code> is how you find customers with no orders, products that never sold, or — later in Phase 2 — records that failed to load. Memorize this shape.</div></div>
-</div></article><article class="lesson" id="window-functions" data-nav-title="Window Functions">
-  <div class="lesson-head"><h3>Window Functions</h3></div><p>A window function calculates something <strong>across a set of related rows</strong> without collapsing them into one row the way <code>GROUP BY</code> does — you keep every row, and get a ranking, running total, or comparison alongside it. This is the tool that makes "top N per group" and "running total" questions easy.</p><div class="table-wrap"><table><thead><tr><th>Function</th><th>Returns</th></tr></thead><tbody><tr><td><code>ROW_NUMBER()</code></td><td>1, 2, 3... with no ties</td></tr><tr><td><code>RANK()</code></td><td>ties share a rank, next rank skips (1, 1, 3)</td></tr><tr><td><code>SUM() / AVG() OVER (...)</code></td><td>running total / running average</td></tr><tr><td><code>LAG() / LEAD()</code></td><td>the previous / next row's value</td></tr></tbody></table></div></article><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 6 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Explain the difference between <code>INNER JOIN</code> and <code>LEFT JOIN</code> in one sentence</span></li><li><i class="fa-solid fa-square-check"></i><span>Use <code>LEFT JOIN ... WHERE x IS NULL</code> to find "missing" records</span></li><li><i class="fa-solid fa-square-check"></i><span>Rewrite a nested subquery as a <code>WITH</code> CTE</span></li><li><i class="fa-solid fa-square-check"></i><span>Use <code>ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...)</code> to rank rows within a group</span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-5"><span class="lbl">Back</span><span class="ttl">SQL Fundamentals</span></a>
-      <a class="next" href="#chapter-7"><span class="lbl">Next</span><span class="ttl">Dimensional Modeling →</span></a>
-    </div></section>
-<section class="chapter" id="chapter-7" data-nav-title="Chapter 7: Building a Reporting Layer">
-  <header class="chapter-head accent-emerald">
-    <div class="chapter-num">07</div>
-    <div>
-      <div class="kicker">WEEK 4 · DIMENSIONAL MODELING</div>
-      <h2>Building a Reporting Layer</h2>
-      <p class="chapter-sub">The tables you query for daily operations aren't the tables you want to build dashboards on. Here's the design pattern that fixes that.</p>
-    </div>
-  </header>
-<article class="lesson" id="oltp-olap" data-nav-title="OLTP vs OLAP">
-  <div class="lesson-head"><h3>OLTP vs OLAP</h3></div><p><code>customers</code>, <code>orders</code>, and <code>order_items</code> are <strong>OLTP</strong> tables (Online Transaction Processing) — designed so BrightCart's checkout page can insert one order quickly and safely. A dashboard asking "what were our total sales by category, by month?" has completely different needs — that's <strong>OLAP</strong> (Online Analytical Processing), and the design pattern for it is called a <strong>star schema</strong>.</p></article><article class="lesson" id="star-schema" data-nav-title="The Star Schema: Facts &amp; Dimensions">
-  <div class="lesson-head"><h3>The Star Schema: Facts &amp; Dimensions</h3></div><p>A <strong>fact table</strong> holds the numbers you want to measure (<code>sales_amount</code>, <code>quantity</code>) plus foreign keys pointing out to <strong>dimension tables</strong>, which hold the descriptive context (who, what, when).</p></article><div class="checklist-box">
-  <p class="checklist-title"><i class="fa-solid fa-clipboard-check"></i> Chapter 7 Checklist — before moving on, you should be able to:</p>
-  <ul class="checklist"><li><i class="fa-solid fa-square-check"></i><span>Explain OLTP vs OLAP in one sentence each</span></li><li><i class="fa-solid fa-square-check"></i><span>Draw (or describe) a star schema with one fact table and at least two dimensions</span></li><li><i class="fa-solid fa-square-check"></i><span>Build <code>fact_sales</code> and at least two dimension views from the BrightCart OLTP tables</span></li></ul>
-</div><div class="chapter-endnav">
-      <a href="#chapter-6"><span class="lbl">Back</span><span class="ttl">Joins, Subqueries &amp; Window Functions</span></a>
-      <a class="next" href="#chapter-8"><span class="lbl">Next</span><span class="ttl">Phase 1 Wrap-Up →</span></a>
-    </div></section>
-<section class="chapter" id="chapter-8" data-nav-title="Chapter 8: Wrap-Up &amp; What's Next">
-  <header class="chapter-head accent-emerald">
-    <div class="chapter-num">08</div>
-    <div>
-      <div class="kicker">PHASE 1 COMPLETE</div>
-      <h2>Wrap-Up &amp; What's Next</h2>
-      <p class="chapter-sub">You went from an empty folder to a working reporting layer on a real database. Here's what that's actually worth.</p>
-    </div>
-  </header>
-<article class="lesson" id="what-you-can-do" data-nav-title="What You Can Now Do">
-  <div class="lesson-head"><h3>What You Can Now Do</h3></div><div class="mini-grid cols-4"><div class="mini-card">
-          <div class="mini-card-icon"><i class="fa-brands fa-python"></i></div>
-          <p class="mini-card-title">Python</p>
-          <p class="mini-card-body">Variables, control flow, functions, file I/O, and basic JSON/API handling — the full toolkit for scripting a data task.</p>
-        </div><div class="mini-card">
-          <div class="mini-card-icon"><i class="fa-brands fa-github"></i></div>
-          <p class="mini-card-title">Git &amp; GitHub</p>
-          <p class="mini-card-body">Track changes with commits and publish a public portfolio employers can actually look at.</p>
-        </div><div class="mini-card">
-          <div class="mini-card-icon"><i class="fa-solid fa-database"></i></div>
-          <p class="mini-card-title">SQL</p>
-          <p class="mini-card-body">SELECT through window functions — enough to answer almost any business question a stakeholder asks.</p>
-        </div><div class="mini-card">
-          <div class="mini-card-icon"><i class="fa-solid fa-star"></i></div>
-          <p class="mini-card-title">Dimensional Modeling</p>
-          <p class="mini-card-body">Design a star schema and know when a view, materialized view, or table is the right tool.</p>
-        </div></div></article><article class="lesson" id="whats-next" data-nav-title="Coming Up in Phase 2: Weeks 5–8">
-  <div class="lesson-head"><h3>Coming Up in Phase 2: Weeks 5–8</h3></div><p>Phase 1 was about talking to data one script and one query at a time. Phase 2 is about making that repeatable — turning BrightCart's <code>dirty_orders.csv</code> into an automated pipeline that cleans itself, and moving your work from your laptop into the cloud.</p></article>
-
-<div class="enroll-cta">
-  <div>
-    <h4>Ready to keep going?</h4>
-    <p>Phase 2 (pandas, ETL pipelines, cloud, warehousing) and Phase 3 (Airflow, Spark, Docker, capstone) continue below — the first chapter of each is free too.</p>
-  </div>
-  <a href="Phase_2_Book.html">Start Phase 2 →</a>
 </div>
 
-<div class="chapter-endnav">
-      <a href="#chapter-7"><span class="lbl">Back</span><span class="ttl">Dimensional Modeling</span></a>
-      <span></span>
-    </div></section><footer class="book-footer">
-      <p>BrightCart Data Engineering Bootcamp — Phase 1: Foundations. A free resource from <a href="../index.html">CL Magno I.T. Solutions</a>. Continue to <a href="Phase_2_Book.html">Phase 2</a> for Pandas, ETL pipelines, cloud storage, and data warehousing, or see the <a href="../index.html#bootcamps">full live 12-week bootcamp</a>.</p>
+<div class="locked-chapter" id="chapter-4" data-nav-title="Chapter 4: Functions, Files &amp; Your First Data Extraction (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 1–2 · LOCKED</div>
+        <h2 style="font-size:24px;">Functions, Files &amp; Your First Data Extraction</h2>
+        <p class="chapter-sub">Functions turn repeated code into reusable tools. Files and APIs are how real data gets into your programs in the first place.</p>
+      </div>
+    </div>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> Functions: Reusable Blocks of Logic</li>
+      <li><i class="fa-solid fa-lock"></i> Handling Errors: try / except</li>
+      <li><i class="fa-solid fa-lock"></i> Portfolio Project — Order Total Calculator</li>
+      <li><i class="fa-solid fa-lock"></i> Reading &amp; Writing CSV Files</li>
+      <li><i class="fa-solid fa-lock"></i> Working With JSON &amp; APIs</li>
+      <li><i class="fa-solid fa-lock"></i> Portfolio Project — BrightCart Order Extractor</li>
+    </ul>
+  </div>
+</div>
+
+<div class="locked-chapter" id="chapter-5" data-nav-title="Chapter 5: Talking to a Database (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 3 · LOCKED</div>
+        <h2 style="font-size:24px;">Talking to a Database</h2>
+        <p class="chapter-sub">SQL is how you ask a database questions. We'll load BrightCart into a real database and start asking it things.</p>
+      </div>
+    </div>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> What Is a Relational Database?</li>
+      <li><i class="fa-solid fa-lock"></i> Tool Spotlight: PostgreSQL</li>
+      <li><i class="fa-solid fa-lock"></i> Tool Spotlight: A SQL Client (DBeaver / pgAdmin)</li>
+      <li><i class="fa-solid fa-lock"></i> Loading BrightCart Into Postgres</li>
+      <li><i class="fa-solid fa-lock"></i> SELECT, WHERE, ORDER BY, LIMIT</li>
+      <li><i class="fa-solid fa-lock"></i> Aggregate Functions &amp; GROUP BY</li>
+    </ul>
+  </div>
+</div>
+
+<div class="locked-chapter" id="chapter-6" data-nav-title="Chapter 6: Joins, Subqueries &amp; Window Functions (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 3–4 · LOCKED</div>
+        <h2 style="font-size:24px;">Joins, Subqueries &amp; Window Functions</h2>
+        <p class="chapter-sub">Real BrightCart questions almost always need more than one table. This is how you combine them.</p>
+      </div>
+    </div>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> Primary Keys, Foreign Keys &amp; the ERD</li>
+      <li><i class="fa-solid fa-lock"></i> JOIN Types (INNER, LEFT, RIGHT, FULL)</li>
+      <li><i class="fa-solid fa-lock"></i> Subqueries &amp; CTEs</li>
+      <li><i class="fa-solid fa-lock"></i> Window Functions</li>
+    </ul>
+  </div>
+</div>
+
+<div class="locked-chapter" id="chapter-7" data-nav-title="Chapter 7: Building a Reporting Layer (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">WEEK 4 · LOCKED</div>
+        <h2 style="font-size:24px;">Building a Reporting Layer</h2>
+        <p class="chapter-sub">The tables you query for daily operations aren't the tables you want to build dashboards on. Here's the design pattern that fixes that.</p>
+      </div>
+    </div>
+    <ul class="locked-lessons">
+      <li><i class="fa-solid fa-lock"></i> OLTP vs OLAP</li>
+      <li><i class="fa-solid fa-lock"></i> The Star Schema: Facts &amp; Dimensions</li>
+    </ul>
+  </div>
+</div>
+
+<div class="locked-chapter" id="chapter-8" data-nav-title="Chapter 8: Wrap-Up &amp; What's Next (Locked)" data-locked="true">
+  <div class="locked-chapter-inner">
+    <div class="locked-head">
+      <div class="locked-badge"><i class="fa-solid fa-lock"></i></div>
+      <div>
+        <div class="kicker" style="color:#fbbf24;">PHASE 1 COMPLETE · LOCKED</div>
+        <h2 style="font-size:24px;">Wrap-Up &amp; What's Next</h2>
+        <p class="chapter-sub">Your full Phase 1 portfolio evidence checklist, and what changes going into Phase 2 (pandas, ETL, cloud).</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="paywall-cta">
+  <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
+  <span class="paywall-price">FULL PHASE 1 ACCESS</span>
+  <h3>Unlock Chapters 2–8</h3>
+  <p>Get the rest of Phase 1 — Python fundamentals, functions &amp; files, SQL from SELECT to window functions, and dimensional modeling — plus 3 portfolio projects built around the same BrightCart dataset.</p>
+  <div class="paywall-actions">
+    <a class="paywall-buy" href="../index.html?book=phase1#contact">Buy Full Access</a>
+    <a class="paywall-bootcamp" href="../index.html#bootcamps">Get it free with the Bootcamp</a>
+  </div>
+</div>
+
+<footer class="book-footer">
+      <p>BrightCart Data Engineering Bootcamp — Phase 1: Foundations. A resource from <a href="../index.html">CL Magno I.T. Solutions</a>. Chapters 0–1 are free · <a href="../index.html?book=phase1#contact">buy full access</a> or get it included in the <a href="../index.html#bootcamps">live 12-week bootcamp</a>.</p>
     </footer>
     </div>
   </main>
@@ -970,10 +674,11 @@ INSERT 0 63</code></pre></div><div class="callout callout-tip">
 document.addEventListener('DOMContentLoaded', function () {
   // ---- Build table of contents from chapters/lessons ----
   const toc = document.getElementById('toc');
-  const chapters = document.querySelectorAll('.chapter');
+  const chapters = document.querySelectorAll('.chapter, .locked-chapter');
   let tocHtml = '';
   chapters.forEach((ch) => {
     const chTitle = ch.getAttribute('data-nav-title') || ch.id;
+    const locked = ch.getAttribute('data-locked') === 'true';
     const lessons = ch.querySelectorAll('.lesson');
     let lessonsHtml = '';
     lessons.forEach((les) => {
@@ -981,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function () {
       lessonsHtml += `<li><a href="#${les.id}" data-target="${les.id}">${lt}</a></li>`;
     });
     tocHtml += `<li class="toc-chapter">
-      <a class="toc-chapter-link" href="#${ch.id}" data-target="${ch.id}"><span class="n">${chTitle.split(':')[0]}</span> ${chTitle.split(':').slice(1).join(':').trim() || ''}</a>
+      <a class="toc-chapter-link${locked ? ' locked' : ''}" href="#${ch.id}" data-target="${ch.id}"><span class="n">${locked ? '<i class=\"fa-solid fa-lock\"></i>' : chTitle.split(':')[0]}</span> ${chTitle.split(':').slice(1).join(':').trim() || ''}</a>
       <ul class="toc-lessons">${lessonsHtml}</ul>
     </li>`;
   });
@@ -1010,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ---- Scrollspy ----
-  const sections = Array.from(document.querySelectorAll('.lesson, .chapter'));
+  const sections = Array.from(document.querySelectorAll('.lesson, .chapter, .locked-chapter'));
   const spy = () => {
     let currentId = null;
     const scrollPos = window.scrollY + 140;

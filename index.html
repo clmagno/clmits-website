@@ -805,17 +805,20 @@
                     <span class="rounded-md bg-white px-4 py-1.5 text-[11px] font-black text-ink">Companion Books</span>
                     <h2 class="mt-6 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">The Data Engineering Bootcamp Books</h2>
                     <p class="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/70">
-                        The full 12-week curriculum, written out as three books — one running case study (BrightCart) from your first <code class="rounded bg-white/10 px-1.5 py-0.5 text-sm text-signal">print()</code> to a dockerized, scheduled data platform. Phase 1 is free in full. Phases 2 and 3 preview their first chapter free.
+                        The full 12-week curriculum, written out as three books — one running case study (BrightCart) from your first <code class="rounded bg-white/10 px-1.5 py-0.5 text-sm text-signal">print()</code> to a dockerized, scheduled data platform. Each phase previews its first two chapters free.
                     </p>
                 </div>
 
                 <div class="grid gap-8 lg:grid-cols-3">
-                    <article class="flex flex-col rounded-2xl border border-white/10 bg-graphite p-7 transition hover:-translate-y-1 hover:border-emerald-400/50">
-                        <span class="mb-5 w-fit rounded-md bg-emerald-500 px-4 py-1 text-[11px] font-black text-ink">FREE · FULL BOOK</span>
+                    <article class="flex flex-col rounded-2xl border border-white/10 bg-graphite p-7 transition hover:-translate-y-1 hover:border-amber-400/50">
+                        <span class="mb-5 w-fit rounded-md bg-amber-400 px-4 py-1 text-[11px] font-black text-ink">FREE PREVIEW</span>
                         <h3 class="text-xl font-black tracking-tight text-white">Phase 1: Foundations</h3>
                         <p class="mt-1 text-xs font-bold uppercase tracking-wide text-white/40">Python · Git &amp; GitHub · SQL</p>
                         <p class="mt-4 text-sm leading-6 text-white/65">Weeks 1-4. Set up your dev environment, learn Python from variables to functions and files, then load BrightCart into PostgreSQL and build a star-schema reporting layer.</p>
-                        <a href="books/Phase_1_Book.html" class="mt-6 inline-flex items-center justify-center rounded-lg bg-white px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Read Free →</a>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <a href="books/Phase_1_Book.html" class="inline-flex items-center justify-center rounded-lg border border-white/30 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5 hover:bg-white/10">Preview Free</a>
+                            <a href="index.html?book=phase1#contact" class="inline-flex items-center justify-center rounded-lg bg-amber-400 px-5 py-3 text-sm font-black text-ink transition hover:-translate-y-0.5">Buy Full Access</a>
+                        </div>
                     </article>
 
                     <article class="flex flex-col rounded-2xl border border-white/10 bg-graphite p-7 transition hover:-translate-y-1 hover:border-amber-400/50">
@@ -1075,6 +1078,7 @@
                                 <option value="PythonAutomation">Python Automation for IT & Ops</option>
                                 <option value="SQLFoundations">SQL Foundations</option>
                                 <option value="SelfPaced">Self-Paced Masterclass</option>
+                                <option value="Phase1Book">Buying Phase 1 Book (Full Access)</option>
                                 <option value="Phase2Book">Buying Phase 2 Book (Full Access)</option>
                                 <option value="Phase3Book">Buying Phase 3 Book (Full Access)</option>
                                 <option value="AppDev">Cross-Platform App Development</option>
@@ -1180,6 +1184,7 @@
             const messageField = document.getElementById('message');
 
             const bookCopy = {
+                phase1: { option: 'Phase1Book', text: "I'd like to purchase full access to the Phase 1 book (Foundations). " },
                 phase2: { option: 'Phase2Book', text: "I'd like to purchase full access to the Phase 2 book (Data Processing & Architecture). " },
                 phase3: { option: 'Phase3Book', text: "I'd like to purchase full access to the Phase 3 book (Big Data & Automation). " }
             };

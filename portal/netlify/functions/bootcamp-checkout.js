@@ -1,6 +1,7 @@
 const { getDb } = require('./_lib/db');
 const { createCheckoutSession } = require('./_lib/paymongo');
-const { getTier } = require('./_lib/bootcampPricing');
+const { getTier, resolveOffering } = require('./_lib/bootcampPricing');
+const { getOfferingSlots } = require('./_lib/slots');
 
 // Called cross-origin from clmits.com (a separate static site/domain), not
 // from a portal.clmits.com page -- unlike every other function here, this
@@ -52,17 +53,20 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'That email address doesn’t look right.' }) };
     }
 
-    const tier = getTier(offeringSlug, tierKey);
+    const sql = getDb();
+    const slots = await getOfferingSlots(sql, offeringSlug);
+
+    const tier = getTier(offeringSlug, tierKey, slots);
     if (!tier) {
-        return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ error: 'That pricing option isn’t available anymore. Please refresh the page and try again.' })
-        };
+        const resolved = resolveOffering(offeringSlug, slots);
+        const match = resolved && resolved.tiers.find((t) => t.key === tierKey);
+        const error = match && match.status === 'sold_out'
+            ? 'Sorry — those slots just filled up. Please refresh the page to see what’s still available.'
+            : 'That pricing option isn’t available anymore. Please refresh the page and try again.';
+        return { statusCode: 409, headers, body: JSON.stringify({ error }) };
     }
 
     const siteUrl = process.env.SITE_URL || 'https://clmits.com';
-    const sql = getDb();
 
     // Only the first installment is charged now (the down payment, or the
     // full amount for a single-payment tier). Anything after that is
@@ -78,7 +82,7 @@ exports.handler = async (event) => {
             description: `CLMITS Bootcamp Reservation — ${tier.offeringTitle} (${tier.label}) — ${firstInstallment.label}`,
             successUrl: `${siteUrl}/reserved.html`,
             cancelUrl: `${siteUrl}/index.html#bootcamps`,
-            metadata: { offering_slug: offeringSlug, tier: tierKey, email }
+            metadata: { offering_slug: offeringSlug, tier: tierKey, email, ...(tier.promo ? { promo: tier.promo.id } : {}) }
         });
     } catch (err) {
         return { statusCode: 502, headers, body: JSON.stringify({ error: err.message || 'Could not start checkout.' }) };

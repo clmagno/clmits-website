@@ -17,7 +17,8 @@ exports.handler = async (event) => {
     const sql = getDb();
     const registrations = await sql`
         select id, full_name, email, phone, offering_slug, tier, tier_label,
-               amount_centavos, total_price_centavos, currency, status, created_at, paid_at
+               amount_centavos, total_price_centavos, currency, status, created_at, paid_at,
+               reminder_count, last_reminded_at
         from bootcamp_registrations
         order by created_at desc
     `;

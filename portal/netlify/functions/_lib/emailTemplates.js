@@ -175,4 +175,59 @@ function bookPurchaseEmail({ fullName, bookTitle, unlockUrl }) {
     return { subject, html };
 }
 
-module.exports = { welcomeEmail, cohortAddedEmail, bookPurchaseEmail, formatDateYMD, scheduleDaysAndTime, firstNameOf };
+function formatPeso(centavos) {
+    return `₱${(centavos / 100).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+}
+
+// Follow-up for a registrant who started checkout but never paid. Their slot
+// is NOT held (slots.js only holds an unpaid checkout for a few minutes), so
+// the message is: pay now to actually secure it. slotsLeft / deadline are
+// optional -- each urgency line only appears when there's a real number or
+// date behind it.
+function paymentReminderEmail({ fullName, offeringTitle, tierLabel, amountDueCentavos, totalCentavos, checkoutUrl, slotsLeft, poolLabel, deadline }) {
+    const subject = `Action needed: your slot in ${offeringTitle} isn't confirmed yet`;
+
+    const slotsLine = slotsLeft != null
+        ? `<p style="color:#b45309;font-weight:bold;">⏳ Only ${slotsLeft} ${escapeHtml(poolLabel)} slot${slotsLeft === 1 ? '' : 's'} left for the upcoming batch — and slots go to whoever pays first.</p>`
+        : `<p style="color:#b45309;font-weight:bold;">⏳ Slots for the upcoming batch are limited and go to whoever pays first.</p>`;
+    const deadlineLine = deadline
+        ? `<p>Your ${escapeHtml(poolLabel)} rate is available until <strong>${formatDateYMD(deadline)}</strong>.</p>`
+        : '';
+    const totalLine = totalCentavos > amountDueCentavos
+        ? `<p style="margin:4px 0 0 0;color:#555;font-size:13px;">(of ${formatPeso(totalCentavos)} total — the rest follows your payment plan)</p>`
+        : '';
+
+    const html = `
+    <meta charset="UTF-8">
+    <div style="${BASE_STYLE}">
+        <p>Hi ${escapeHtml(firstNameOf(fullName))},</p>
+
+        <p>Thank you for registering for the <strong>${escapeHtml(offeringTitle)}</strong>! We noticed your payment hasn't gone through yet,
+        so <strong>your slot isn't reserved yet</strong>.</p>
+
+        ${slotsLine}
+        ${deadlineLine}
+
+        <div style="margin:24px 0;padding:16px;border:1px solid #ddd;border-radius:8px;background:#f7f7f7;">
+            <p style="margin:0;font-weight:bold;">${escapeHtml(tierLabel)}</p>
+            <p style="margin:8px 0 0 0;font-size:18px;"><strong>${formatPeso(amountDueCentavos)}</strong> to confirm your slot</p>
+            ${totalLine}
+            <p style="margin:16px 0 0 0;"><a href="${escapeHtml(checkoutUrl)}" style="display:inline-block;background:#050505;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Complete My Payment →</a></p>
+            <p style="margin:8px 0 0 0;font-size:13px;color:#555;">Secure checkout via PayMongo.</p>
+        </div>
+
+        <p>Once your payment is in, we'll send your Pre-Work Starter Pack and class link.</p>
+
+        <p>Already paid, ran into a problem at checkout, or have a question? Just reply to this email or message us on
+        <a href="https://m.me/clmits">Messenger</a> — we're happy to help.</p>
+
+        <p style="margin-top:24px;">Best regards,</p>
+        <p style="margin:0;"><strong>Christopher Lloyd Magno</strong><br>
+        Founder, CL Magno I.T. Solutions</p>
+        <p style="margin-top:8px;color:#555;">0918-685-1819<br>02 8654 2970</p>
+    </div>`;
+
+    return { subject, html };
+}
+
+module.exports = { welcomeEmail, cohortAddedEmail, bookPurchaseEmail, paymentReminderEmail, formatDateYMD, scheduleDaysAndTime, firstNameOf };

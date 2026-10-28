@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBSRH8GYGQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-QBSRH8GYGQ');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
@@ -35,6 +43,18 @@
 
             <p id="tempPasswordNotice" class="mt-6 hidden rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-900">You're still using a temporary password. Please set a new one below.</p>
 
+            <p id="nameNotice" class="mt-6 hidden rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm font-bold text-amber-900">We don't have your name yet. Please add it below so your instructor knows who you are.</p>
+
+            <form id="profileForm" class="mt-8 space-y-4 rounded-xl border border-line bg-white p-6">
+                <h2 class="text-lg font-black">Profile</h2>
+                <div>
+                    <label class="mb-1 block text-xs font-black uppercase tracking-wide text-gray-500">Full Name</label>
+                    <input type="text" name="fullName" autocomplete="name" required minlength="2" maxlength="120" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-ink">
+                </div>
+                <button type="submit" class="rounded-lg bg-ink px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5">Save Name</button>
+                <p id="profileStatus" class="hidden text-sm font-bold"></p>
+            </form>
+
             <form id="passwordForm" class="mt-8 space-y-4 rounded-xl border border-line bg-white p-6">
                 <h2 class="text-lg font-black">Change Password</h2>
                 <div>
@@ -65,6 +85,30 @@
             if (session.mustChangePassword) {
                 document.getElementById('tempPasswordNotice').classList.remove('hidden');
             }
+            if (!session.fullName) {
+                document.getElementById('nameNotice').classList.remove('hidden');
+            }
+
+            const profileForm = document.getElementById('profileForm');
+            profileForm.fullName.value = session.fullName || '';
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const statusEl = document.getElementById('profileStatus');
+                const { ok, data } = await apiFetch('update-profile', {
+                    method: 'POST',
+                    body: JSON.stringify({ fullName: profileForm.fullName.value })
+                });
+                statusEl.classList.remove('hidden');
+                if (ok) {
+                    statusEl.textContent = 'Name saved.';
+                    statusEl.className = 'text-sm font-bold text-emerald-600';
+                    profileForm.fullName.value = data.fullName;
+                    document.getElementById('nameNotice').classList.add('hidden');
+                } else {
+                    statusEl.textContent = (data && data.error) || 'Could not save your name.';
+                    statusEl.className = 'text-sm font-bold text-red-600';
+                }
+            });
 
             document.getElementById('passwordForm').addEventListener('submit', async (e) => {
                 e.preventDefault();

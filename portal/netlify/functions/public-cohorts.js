@@ -1,5 +1,6 @@
 const { getDb } = require('./_lib/db');
 const { toDateString } = require('./_lib/dates');
+const { getOfferingSlots } = require('./_lib/slots');
 
 // Public, no-auth endpoint -- called cross-origin from clmits.com (a separate
 // static site/domain), same CORS pattern as bootcamp-checkout.js. Returns
@@ -42,16 +43,30 @@ exports.handler = async (event) => {
 
     const slotsFor = (capacity, activeCount) => (capacity != null ? Math.max(0, capacity - activeCount) : null);
 
-    const cohorts = rows.map((r) => ({
-        courseTitle: r.course_title,
-        courseSlug: r.course_slug,
-        name: r.name,
-        scheduleType: r.schedule_type,
-        startDate: toDateString(r.start_date),
-        durationWeeks: r.duration_weeks,
-        earlyBird: { capacity: r.capacity_early_bird, slotsRemaining: slotsFor(r.capacity_early_bird, r.active_early_bird) },
-        standard: { capacity: r.capacity_standard, slotsRemaining: slotsFor(r.capacity_standard, r.active_standard) }
-    }));
+    // The next cohort of each course also loses slots to paid online
+    // registrations not yet placed by an admin -- same count checkout uses.
+    const nextCohortSlots = {};
+    for (const r of rows) {
+        if (!(r.course_slug in nextCohortSlots)) {
+            const slots = await getOfferingSlots(sql, r.course_slug);
+            nextCohortSlots[r.course_slug] = slots.cohortId === r.id ? slots : null;
+        }
+    }
+
+    const cohorts = rows.map((r) => {
+        const live = nextCohortSlots[r.course_slug];
+        const useLive = live && live.cohortId === r.id;
+        return {
+            courseTitle: r.course_title,
+            courseSlug: r.course_slug,
+            name: r.name,
+            scheduleType: r.schedule_type,
+            startDate: toDateString(r.start_date),
+            durationWeeks: r.duration_weeks,
+            earlyBird: { capacity: r.capacity_early_bird, slotsRemaining: useLive ? live.early_bird : slotsFor(r.capacity_early_bird, r.active_early_bird) },
+            standard: { capacity: r.capacity_standard, slotsRemaining: useLive ? live.standard : slotsFor(r.capacity_standard, r.active_standard) }
+        };
+    });
 
     return { statusCode: 200, headers, body: JSON.stringify({ cohorts }) };
 };

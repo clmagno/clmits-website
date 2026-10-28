@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBSRH8GYGQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-QBSRH8GYGQ');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="CL Magno I.T. Solutions builds cross-platform applications and provides project-based data engineering bootcamps, self-paced training, and corporate I.T. training.">
@@ -71,6 +79,11 @@
             <path fill="#fff" d="M9.6 22.6l5-7.9 4.1 3.1 5-3.1-5 7.9-4.1-3.1z"/>
         </svg>
         <span class="absolute right-16 hidden whitespace-nowrap rounded-lg bg-ink px-3 py-1.5 text-xs font-bold text-white group-hover:inline-flex">Chat on Messenger</span>
+    </a>
+
+    <a id="promoBar" href="#bootcamps" class="hidden bg-gradient-to-r from-violet-700 via-fuchsia-600 to-violet-700 px-4 py-2.5 text-center text-xs font-bold text-white sm:text-sm">
+        <span class="mr-1">🚨</span><span id="promoBarText"></span>
+        <span class="ml-2 inline-block rounded-md bg-white px-2 py-0.5 text-[11px] font-black text-violet-700">Reserve now →</span>
     </a>
 
     <nav class="sticky top-0 z-50 border-b border-line/80 bg-white/95 backdrop-blur-xl">
@@ -414,6 +427,13 @@
                     <!-- Bundle: Cloud + Data Engineering Track -->
                     <article class="flex flex-col overflow-hidden rounded-2xl border border-violet-400/20 bg-graphite lg:col-span-2">
                         <div class="flex-1 p-8">
+                            <div id="cloudDePromo" class="mb-5 hidden rounded-xl border-2 border-lime-400/70 bg-lime-400/10 p-4 shadow-[0_0_24px_rgba(163,230,53,0.25)]">
+                                <p class="text-[11px] font-black uppercase tracking-wide text-lime-300">🚨 <span data-promo-badge></span> · Limited time, limited slots</p>
+                                <p class="mt-1 text-lg font-black text-white" data-promo-headline></p>
+                                <p class="mt-1 text-sm text-white/75"><span data-promo-detail></span></p>
+                                <p class="mt-2 text-xs font-bold text-lime-200"><span data-promo-slots></span><span data-promo-countdown></span></p>
+                                <button type="button" onclick="openReserveModal('cloud-de-bundle')" class="mt-3 rounded-lg bg-lime-400 px-4 py-2 text-sm font-black text-ink transition hover:-translate-y-0.5 hover:brightness-105">Reserve with <span data-promo-dp></span> DP →</button>
+                            </div>
                             <span class="mb-4 inline-block rounded-md bg-violet-500/15 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-violet-300">Flagship Bundle · 12 Weeks</span>
                             <h3 class="text-2xl font-black tracking-tight text-white">Cloud + Data Engineering Track</h3>
                             <p class="mt-1 text-xs font-bold uppercase tracking-wide text-violet-300/80">Data Engineering Career Accelerator — From Beginner to Professional</p>
@@ -495,7 +515,7 @@
                                     <thead class="bg-white/5 text-[11px] font-bold uppercase tracking-wide text-white/40">
                                         <tr><th class="p-3">Payment Option</th><th class="p-3">How It Works</th><th class="p-3">Total</th><th class="p-3">You Save</th></tr>
                                     </thead>
-                                    <tbody class="divide-y divide-white/10 text-white/75">
+                                    <tbody id="cloudDePricingRows" class="divide-y divide-white/10 text-white/75">
                                         <tr>
                                             <td class="p-3 font-bold text-white">Early Bird — Full Cash</td>
                                             <td class="p-3">₱12,500 down + ₱12,500 balance, on/before Nov 30</td>
@@ -532,11 +552,11 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="mt-4 text-xs text-white/50">Early Bird tiers start with a ₱12,500 down payment today; the rest is paid off per the schedule above. Pay securely below and we'll follow up with payment confirmation and your Pre-Work Starter Pack.</p>
+                            <p class="mt-4 text-xs text-white/50">Early Bird tiers start with a down payment today; the rest is paid off per the schedule above. Pay securely below and we'll follow up with payment confirmation and your Pre-Work Starter Pack.</p>
                         </div>
                         <button type="button" onclick="openReserveModal('cloud-de-bundle')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-violet-400 px-8 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
-                            <span class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
+                            <span id="cloudDeCtaNote" class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
                         </button>
                     </article>
 
@@ -886,6 +906,106 @@
                 </div>
             </div>
         </section>
+
+        <section id="gallery" class="bg-white py-16 sm:py-20">
+            <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
+                <div class="mx-auto max-w-3xl text-center">
+                    <p class="mb-4 text-xs font-black uppercase tracking-[0.3em] text-signal">Inside Our Classes</p>
+                    <h2 class="text-4xl font-black tracking-[-0.04em] sm:text-5xl">Real Classes. Real Graduates.</h2>
+                    <p class="mx-auto mt-5 max-w-2xl text-base leading-7 text-gray-700">Small-group, hands-on sessions at our Taguig training room &mdash; laptops open, code running, questions answered on the spot. These are actual batches, not stock photos.</p>
+                </div>
+
+                <div class="mt-12 grid auto-rows-[160px] grid-cols-2 gap-4 sm:auto-rows-[220px] md:grid-cols-4">
+                    <button type="button" data-lightbox="img/gallery/class-session-1.jpg" class="group relative overflow-hidden rounded-2xl border border-line bg-gray-200 col-span-2 row-span-2">
+                        <img src="img/gallery/class-session-1.jpg" alt="Students coding during a CLMITS class session" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                    </button>
+                    <button type="button" data-lightbox="img/gallery/graduates-batch-2024.jpg" class="group relative overflow-hidden rounded-2xl border border-line bg-gray-200 col-span-2">
+                        <img src="img/gallery/graduates-batch-2024.jpg" alt="A CLMITS graduating batch holding their certificates" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                    </button>
+                    <button type="button" data-lightbox="img/gallery/class-session-2.jpg" class="group relative overflow-hidden rounded-2xl border border-line bg-gray-200 ">
+                        <img src="img/gallery/class-session-2.jpg" alt="Hands-on lab session at the CLMITS training room" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                    </button>
+                    <button type="button" data-lightbox="img/gallery/class-session-3.jpg" class="group relative overflow-hidden rounded-2xl border border-line bg-gray-200 ">
+                        <img src="img/gallery/class-session-3.jpg" alt="Instructor-led lecture with a small group of students" loading="lazy" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                    </button>
+                </div>
+
+                <div class="mt-14 flex items-end justify-between gap-4">
+                    <div>
+                        <h3 class="text-2xl font-black tracking-[-0.03em]">Our Graduates</h3>
+                        <p class="mt-1 text-sm text-gray-600">Every batch ends with certificates handed out in person.</p>
+                    </div>
+                    <p class="hidden text-xs font-bold text-gray-400 sm:block">Scroll &rarr;</p>
+                </div>
+                <div class="custom-scrollbar mt-5 flex snap-x gap-4 overflow-x-auto pb-4">
+                        <button type="button" data-lightbox="img/gallery/graduate-01.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-01.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-02.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-02.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-03.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-03.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-04.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-04.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-05.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-05.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-06.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-06.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-07.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-07.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-08.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-08.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-09.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-09.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-10.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-10.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                        <button type="button" data-lightbox="img/gallery/graduate-11.jpg" class="group w-40 shrink-0 snap-start overflow-hidden rounded-2xl border border-line bg-gray-200 sm:w-48">
+                            <img src="img/gallery/graduate-11.jpg" alt="CLMITS graduate receiving a certificate of completion" loading="lazy" class="aspect-[3/4] w-full object-cover transition duration-300 group-hover:scale-105">
+                        </button>
+                </div>
+            </div>
+        </section>
+
+        <div id="lightbox" class="fixed inset-0 z-[70] hidden items-center justify-center bg-black/90 p-4" role="dialog" aria-modal="true" aria-label="Photo viewer">
+            <button type="button" id="lightboxClose" class="absolute right-4 top-4 rounded-full bg-white/10 px-3 py-1 text-2xl font-bold text-white hover:bg-white/20" aria-label="Close">&times;</button>
+            <button type="button" id="lightboxPrev" class="absolute left-2 rounded-full bg-white/10 px-3 py-2 text-2xl font-bold text-white hover:bg-white/20 sm:left-6" aria-label="Previous photo">&lsaquo;</button>
+            <img id="lightboxImg" src="" alt="" class="max-h-[88vh] max-w-full rounded-xl object-contain">
+            <button type="button" id="lightboxNext" class="absolute right-2 rounded-full bg-white/10 px-3 py-2 text-2xl font-bold text-white hover:bg-white/20 sm:right-6" aria-label="Next photo">&rsaquo;</button>
+        </div>
+        <script>
+            (() => {
+                const items = [...document.querySelectorAll('#gallery [data-lightbox]')];
+                const box = document.getElementById('lightbox');
+                const img = document.getElementById('lightboxImg');
+                let current = 0;
+                const show = (i) => {
+                    current = (i + items.length) % items.length;
+                    img.src = items[current].dataset.lightbox;
+                    img.alt = items[current].querySelector('img').alt;
+                };
+                const close = () => { box.classList.add('hidden'); box.classList.remove('flex'); };
+                items.forEach((el, i) => el.addEventListener('click', () => { show(i); box.classList.remove('hidden'); box.classList.add('flex'); }));
+                document.getElementById('lightboxClose').addEventListener('click', close);
+                document.getElementById('lightboxPrev').addEventListener('click', (e) => { e.stopPropagation(); show(current - 1); });
+                document.getElementById('lightboxNext').addEventListener('click', (e) => { e.stopPropagation(); show(current + 1); });
+                box.addEventListener('click', (e) => { if (e.target === box) close(); });
+                document.addEventListener('keydown', (e) => {
+                    if (box.classList.contains('hidden')) return;
+                    if (e.key === 'Escape') close();
+                    if (e.key === 'ArrowLeft') show(current - 1);
+                    if (e.key === 'ArrowRight') show(current + 1);
+                });
+            })();
+        </script>
 
         <section id="testimonials" class="bg-paper py-16 sm:py-20">
             <div class="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
@@ -1387,82 +1507,176 @@
             targets.forEach((el) => observer.observe(el));
         })();
 
-        // Bootcamp "Reserve your slot" payment modal -- guest checkout, no
-        // portal account needed. Prices/deadlines here are for display only;
-        // the Netlify function re-validates everything server-side.
-        const BOOTCAMP_OFFERINGS = {
-            'cloud-de-bundle': {
-                title: 'Cloud + Data Engineering Track',
-                tiers: [
-                    { key: 'early_bird_full', label: 'Early Bird — Full Cash Payment (Best Value)', total: 25000, dueToday: 12500, note: '+ ₱12,500 balance due on or before Nov 30, 2026', deadline: '2026-11-20' },
-                    { key: 'early_bird_installment', label: 'Early Bird — Installment Plan', total: 29000, dueToday: 12500, note: '+ 3 monthly installments of ₱5,500', deadline: '2026-11-20' },
-                    { key: 'standard', label: 'Standard Rate', total: 35000, dueToday: 35000, note: 'Paid in full', deadline: null }
-                ]
-            },
-            'gcp-bootcamp': {
-                title: 'GCP Associate Cloud Engineer Bootcamp',
-                tiers: [
-                    { key: 'early_bird', label: 'Early Bird', total: 29999, dueToday: 29999, note: 'Paid in full', deadline: '2026-11-20' },
-                    { key: 'standard', label: 'Standard Rate', total: 35000, dueToday: 35000, note: 'Paid in full', deadline: null }
-                ]
-            },
-            'python-automation': {
-                title: 'Python Automation for IT & Ops',
-                tiers: [
-                    { key: 'early_bird', label: 'Early Bird', total: 21000, dueToday: 21000, note: 'Paid in full', deadline: '2026-11-13' },
-                    { key: 'standard', label: 'Standard Rate', total: 25000, dueToday: 25000, note: 'Paid in full', deadline: null }
-                ]
-            },
-            'sql-foundations': {
-                title: 'SQL Foundations',
-                tiers: [
-                    { key: 'early_bird', label: 'Early Bird', total: 6500, dueToday: 6500, note: 'Paid in full', deadline: '2026-10-23' },
-                    { key: 'standard', label: 'Standard Rate', total: 8000, dueToday: 8000, note: 'Paid in full', deadline: null }
-                ]
-            }
-        };
-
+        // Bootcamp pricing comes live from the portal's public-pricing function
+        // (portal/netlify/functions/_lib/bootcampPricing.js is the only place
+        // prices, promos and deadlines are defined). Display only -- checkout
+        // re-validates everything server-side.
+        const PRICING_URL = 'https://portal.clmits.com/.netlify/functions/public-pricing';
         const BOOTCAMP_CHECKOUT_URL = 'https://portal.clmits.com/.netlify/functions/bootcamp-checkout';
 
+        let bootcampPricing = null;
         let currentOfferingSlug = null;
 
-        function tierAvailable(tier) {
-            if (!tier.deadline) return true;
-            return new Date() <= new Date(`${tier.deadline}T23:59:59+08:00`);
+        const peso = (centavos) => '₱' + Math.round(centavos / 100).toLocaleString();
+        const TIER_STATUS_TEXT = { ended: 'Ended', sold_out: 'Sold out', not_yet_open: 'Opens after Early Bird' };
+
+        function loadBootcampPricing() {
+            return fetch(PRICING_URL, { cache: 'no-store' })
+                .then((res) => { if (!res.ok) throw new Error(); return res.json(); })
+                .then((data) => { bootcampPricing = data.offerings; return bootcampPricing; });
         }
 
-        function openReserveModal(slug) {
-            const offering = BOOTCAMP_OFFERINGS[slug];
-            if (!offering) return;
-            currentOfferingSlug = slug;
+        function timeLeft(endsAt) {
+            const ms = new Date(endsAt) - new Date();
+            if (ms <= 0) return null;
+            const d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60, sec = Math.floor(ms / 1000) % 60;
+            return d > 0 ? `${d}d ${h}h ${m}m` : `${h}h ${m}m ${sec}s`;
+        }
 
-            document.getElementById('reserveModalTitle').textContent = offering.title;
+        function slotsText(n) {
+            if (n == null) return '';
+            return n === 1 ? 'Only 1 Early Bird slot left! ' : `Only ${n} Early Bird slots left! `;
+        }
 
-            const firstAvailableIndex = offering.tiers.findIndex(tierAvailable);
-            document.getElementById('reserveTiers').innerHTML = offering.tiers.map((t, i) => {
-                const available = tierAvailable(t);
+        // Every open tier carrying a promo, across all offerings.
+        function livePromos() {
+            const out = [];
+            Object.entries(bootcampPricing || {}).forEach(([slug, o]) => {
+                o.tiers.forEach((t) => {
+                    if (t.promo && t.status === 'open') out.push({ slug, offering: o, tier: t });
+                });
+            });
+            return out;
+        }
+
+        function renderCloudDePricing() {
+            const o = bootcampPricing && bootcampPricing['cloud-de-bundle'];
+            if (!o) return;
+            const fullPrice = Math.max(...o.tiers.map((t) => t.totalCentavos));
+            document.getElementById('cloudDePricingRows').innerHTML = o.tiers.map((t) => {
+                const closed = t.status !== 'open';
+                const save = fullPrice - t.totalCentavos;
+                const how = t.status === 'not_yet_open'
+                    ? 'Opens once Early Bird slots are gone or after Nov 20'
+                    : `${peso(t.dueTodayCentavos)} ${t.installmentCount > 1 ? 'down' : 'paid in full'}${t.installmentCount > 1 && t.note ? ', then ' + t.note.replace(/^\+\s*/, '') : ''}`;
+                const tag = t.promo && !closed
+                    ? `<span class="ml-1 inline-block rounded bg-lime-400 px-1.5 py-0.5 text-[10px] font-black uppercase text-ink">${t.promo.badge || 'Promo'}</span>`
+                    : closed ? `<span class="ml-1 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-black uppercase text-white/60">${TIER_STATUS_TEXT[t.status]}</span>` : '';
                 return `
-                    <label class="flex items-start gap-3 rounded-lg border p-3 text-sm ${available ? 'cursor-pointer border-gray-300 hover:border-ink' : 'cursor-not-allowed border-gray-200 opacity-50'}">
-                        <input type="radio" name="reserveTier" value="${t.key}" class="mt-0.5 h-4 w-4 shrink-0" ${i === firstAvailableIndex ? 'checked' : ''} ${available ? '' : 'disabled'}>
+                    <tr class="${closed ? 'opacity-50' : ''}">
+                        <td class="p-3 font-bold text-white">${t.label.replace(/\s*\(.*\)$/, '')}${tag}</td>
+                        <td class="p-3">${how}</td>
+                        <td class="p-3 font-black ${save > 0 ? 'text-violet-300' : 'text-white'}">${peso(t.totalCentavos)}</td>
+                        <td class="p-3">${save > 0 ? peso(save) : '—'}</td>
+                    </tr>`;
+            }).join('');
+        }
+
+        function renderPromos() {
+            const promos = livePromos();
+            const bar = document.getElementById('promoBar');
+            const strip = document.getElementById('cloudDePromo');
+            const cta = document.getElementById('cloudDeCtaNote');
+            if (!promos.length) {
+                bar.classList.add('hidden');
+                strip.classList.add('hidden');
+                return;
+            }
+
+            const first = promos[0];
+            const slotsLeft = bootcampPricing[first.slug].slotsLeft[first.tier.pool];
+            const left = first.tier.promo.endsAt ? timeLeft(first.tier.promo.endsAt) : null;
+            bar.href = '#bootcamps';
+            bar.onclick = (e) => { e.preventDefault(); openReserveModal(first.slug); };
+            document.getElementById('promoBarText').textContent =
+                `${first.offering.title}: ${first.tier.promo.headline || first.tier.promo.badge}` +
+                (slotsLeft != null ? ` · ${slotsLeft} slot${slotsLeft === 1 ? '' : 's'} left` : '') +
+                (left ? ` · ends in ${left}` : '');
+            bar.classList.remove('hidden');
+            bar.classList.add('block');
+
+            const cloud = promos.find((p) => p.slug === 'cloud-de-bundle');
+            if (!cloud) { strip.classList.add('hidden'); return; }
+            const t = cloud.tier;
+            const cloudLeft = t.promo.endsAt ? timeLeft(t.promo.endsAt) : null;
+            strip.querySelector('[data-promo-badge]').textContent = t.promo.badge || 'Promo';
+            strip.querySelector('[data-promo-headline]').textContent = t.promo.headline || t.label;
+            strip.querySelector('[data-promo-detail]').textContent =
+                `${peso(t.dueTodayCentavos)} down payment today${t.note ? ', then ' + t.note.replace(/^\+\s*/, '') : ''} — ${peso(t.totalCentavos)} total.`;
+            strip.querySelector('[data-promo-dp]').textContent = peso(t.dueTodayCentavos);
+            strip.querySelector('[data-promo-slots]').textContent = slotsText(bootcampPricing['cloud-de-bundle'].slotsLeft[t.pool]);
+            strip.querySelector('[data-promo-countdown]').textContent = cloudLeft ? `Promo ends in ${cloudLeft}.` : '';
+            strip.classList.remove('hidden');
+            cta.textContent = `${peso(t.dueTodayCentavos)} DP promo${cloudLeft ? ' · ends in ' + cloudLeft : ''}`;
+        }
+
+        loadBootcampPricing()
+            .then(() => {
+                renderCloudDePricing();
+                renderPromos();
+                // Tick the countdown; re-fetch every minute so slot counts and
+                // a promo ending mid-visit show up without a reload.
+                setInterval(renderPromos, 1000);
+                setInterval(() => loadBootcampPricing().then(() => { renderCloudDePricing(); renderPromos(); }).catch(() => {}), 60000);
+            })
+            .catch(() => { /* keep the static fallback rows */ });
+
+        function renderReserveTiers(offering) {
+            const tiers = offering.tiers.filter((t) => t.status !== 'ended');
+            const firstOpen = tiers.findIndex((t) => t.status === 'open');
+            const promoOpen = tiers.findIndex((t) => t.status === 'open' && t.promo);
+            const preselect = promoOpen !== -1 ? promoOpen : firstOpen;
+            if (firstOpen === -1) {
+                return '<p class="rounded-lg bg-amber-50 p-3 text-sm font-bold text-amber-800">All slots for this batch are taken. <a href="#contact" onclick="closeReserveModal()" class="underline">Message us</a> to get on the list for the next one.</p>';
+            }
+            return tiers.map((t, i) => {
+                const open = t.status === 'open';
+                const slotsLeft = offering.slotsLeft[t.pool];
+                return `
+                    <label class="flex items-start gap-3 rounded-lg border p-3 text-sm ${open ? 'cursor-pointer hover:border-ink' : 'cursor-not-allowed border-gray-200 opacity-50'} ${open && t.promo ? 'border-lime-500 bg-lime-50' : open ? 'border-gray-300' : ''}">
+                        <input type="radio" name="reserveTier" value="${t.key}" class="mt-0.5 h-4 w-4 shrink-0" ${i === preselect ? 'checked' : ''} ${open ? '' : 'disabled'}>
                         <span class="flex-1">
                             <span class="flex items-start justify-between gap-2">
                                 <span class="font-bold">${t.label}</span>
-                                <span class="shrink-0 font-black">${available ? '₱' + t.total.toLocaleString() : 'Ended'}</span>
+                                <span class="shrink-0 font-black">${open ? peso(t.totalCentavos) : TIER_STATUS_TEXT[t.status]}</span>
                             </span>
-                            ${available ? `
-                                <span class="mt-1 block text-xs text-gray-500">Due today: <span class="font-bold text-ink">₱${t.dueToday.toLocaleString()}</span></span>
+                            ${open && t.promo ? `<span class="mt-1 inline-block rounded bg-lime-400 px-1.5 py-0.5 text-[10px] font-black uppercase text-ink">${t.promo.badge || 'Promo'}${t.promo.endsAt && timeLeft(t.promo.endsAt) ? ' · ends in ' + timeLeft(t.promo.endsAt) : ''}</span>` : ''}
+                            ${open ? `
+                                <span class="mt-1 block text-xs text-gray-500">Due today: <span class="font-bold text-ink">${peso(t.dueTodayCentavos)}</span></span>
                                 ${t.note ? `<span class="mt-0.5 block text-xs text-gray-400">${t.note}</span>` : ''}
+                                ${slotsLeft != null && slotsLeft <= 10 ? `<span class="mt-0.5 block text-xs font-bold text-red-600">${slotsLeft} slot${slotsLeft === 1 ? '' : 's'} left</span>` : ''}
                             ` : ''}
                         </span>
                     </label>`;
             }).join('');
+        }
 
+        async function openReserveModal(slug) {
+            currentOfferingSlug = slug;
+            const tiersEl = document.getElementById('reserveTiers');
+            document.getElementById('reserveModalTitle').textContent = (bootcampPricing && bootcampPricing[slug] && bootcampPricing[slug].title) || 'Loading…';
+            tiersEl.innerHTML = '<p class="text-sm text-gray-500">Loading the latest prices…</p>';
             document.getElementById('reserveError').classList.add('hidden');
             document.getElementById('reserveForm').reset();
-            document.getElementById('reserveSubmitBtn').disabled = false;
+            document.getElementById('reserveSubmitBtn').disabled = true;
             document.getElementById('reserveSubmitBtn').textContent = 'Continue to Payment →';
             document.getElementById('reserveModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+
+            // Always re-fetch on open so slot counts are current.
+            try {
+                await loadBootcampPricing();
+            } catch (err) {
+                if (!bootcampPricing) {
+                    tiersEl.innerHTML = '<p class="rounded-lg bg-red-50 p-3 text-sm font-bold text-red-600">Couldn\'t load prices right now. Please refresh the page or message us on Messenger.</p>';
+                    return;
+                }
+            }
+            const offering = bootcampPricing[slug];
+            if (!offering) return;
+            document.getElementById('reserveModalTitle').textContent = offering.title;
+            tiersEl.innerHTML = renderReserveTiers(offering);
+            document.getElementById('reserveSubmitBtn').disabled = !offering.tiers.some((t) => t.status === 'open');
         }
 
         function closeReserveModal() {

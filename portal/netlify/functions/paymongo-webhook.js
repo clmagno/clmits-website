@@ -69,10 +69,14 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'OK' };
     }
 
+    // A payment reminder replaces the checkout session -- match older links
+    // too, in case the registrant pays through an earlier one.
     const [paidRegistration] = await sql`
         update bootcamp_registrations
         set status = 'paid', paid_at = now()
-        where paymongo_checkout_session_id = ${checkoutSessionId} and status = 'pending'
+        where (paymongo_checkout_session_id = ${checkoutSessionId}
+               or ${checkoutSessionId} = any(previous_checkout_session_ids))
+          and status = 'pending'
         returning id
     `;
 

@@ -1,7 +1,8 @@
 // Server-side source of truth for bootcamp pricing. Never trust an amount
 // sent by the client -- the client only sends offeringSlug + tier keys, and
-// this file resolves those to what to charge. Mirrors clmits.com's
-// #bootcamps section; keep both in sync when prices/deadlines change.
+// this file resolves those to what to charge. clmits.com's reserve modal and
+// Cloud+DE pricing table render from public-pricing.js (which reads this
+// file), so a price/promo change here is the only edit needed.
 //
 // Every tier is a list of `installments`: the first is charged immediately
 // at registration (bootcamp-checkout.js), the rest are scheduled for later
@@ -9,8 +10,23 @@
 // no auto-billing -- GCash can't be silently charged). A single-payment
 // tier is just a one-element installments array.
 //
-// Deadlines are in Asia/Manila (+08:00). A tier past its deadline is treated
-// as unavailable.
+// Tier fields:
+//   pool      -- which cohort slot pool it draws from ('early_bird' |
+//                'standard'), matching cohorts.capacity_early_bird /
+//                capacity_standard. When that pool is full the tier closes.
+//   deadline  -- tier closes after this instant. null = no deadline.
+//   opensAfterPoolCloses -- tier stays hidden until the named pool is closed
+//                (past its deadline or sold out), e.g. Standard Rate only
+//                opening once Early Bird is gone.
+//   note      -- one-line display summary of what's paid after today.
+//   promos    -- temporary overrides. The first promo whose startsAt/endsAt
+//                window contains "now" replaces the tier's label/note/
+//                installments; once it ends the tier reverts on its own.
+//                Registrations keep whatever schedule they signed up under
+//                (installments are copied into bootcamp_installments).
+//                To run a new promo, add an entry here -- nothing else.
+//
+// All dates are Asia/Manila (+08:00).
 
 const OFFERINGS = {
     'cloud-de-bundle': {
@@ -18,7 +34,9 @@ const OFFERINGS = {
         tiers: {
             early_bird_full: {
                 label: 'Early Bird — Full Cash Payment (Best Value)',
+                pool: 'early_bird',
                 deadline: '2026-11-20T23:59:59+08:00',
+                note: '+ ₱12,500 balance due on or before Nov 30, 2026',
                 installments: [
                     { label: 'Down Payment (today)', amountCentavos: 1250000 },
                     { label: 'Balance (on or before Nov 30, 2026)', amountCentavos: 1250000 }
@@ -26,17 +44,40 @@ const OFFERINGS = {
             },
             early_bird_installment: {
                 label: 'Early Bird — Installment Plan',
+                pool: 'early_bird',
                 deadline: '2026-11-20T23:59:59+08:00',
+                note: '+ 3 monthly installments of ₱5,500',
                 installments: [
                     { label: 'Down Payment (today)', amountCentavos: 1250000 },
                     { label: 'Monthly Installment 1', amountCentavos: 550000 },
                     { label: 'Monthly Installment 2', amountCentavos: 550000 },
                     { label: 'Monthly Installment 3', amountCentavos: 550000 }
+                ],
+                promos: [
+                    {
+                        id: 'dp5k-oct2026',
+                        badge: '₱5,000 DP Promo',
+                        headline: 'Only ₱5,000 down payment — limited slots!',
+                        label: 'Early Bird — Installment Plan (₱5,000 DP Promo)',
+                        startsAt: '2026-10-26T00:00:00+08:00',
+                        endsAt: '2026-10-29T23:59:59+08:00',
+                        note: '+ 4 equal monthly installments of ₱6,000',
+                        installments: [
+                            { label: 'Down Payment (today)', amountCentavos: 500000 },
+                            { label: 'Monthly Installment 1', amountCentavos: 600000 },
+                            { label: 'Monthly Installment 2', amountCentavos: 600000 },
+                            { label: 'Monthly Installment 3', amountCentavos: 600000 },
+                            { label: 'Monthly Installment 4', amountCentavos: 600000 }
+                        ]
+                    }
                 ]
             },
             standard: {
                 label: 'Standard Rate',
+                pool: 'standard',
                 deadline: null,
+                opensAfterPoolCloses: 'early_bird',
+                note: 'Paid in full',
                 installments: [
                     { label: 'Full Payment (today)', amountCentavos: 3500000 }
                 ]
@@ -48,12 +89,16 @@ const OFFERINGS = {
         tiers: {
             early_bird: {
                 label: 'Early Bird',
+                pool: 'early_bird',
                 deadline: '2026-11-20T23:59:59+08:00',
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 2999900 }]
             },
             standard: {
                 label: 'Standard Rate',
+                pool: 'standard',
                 deadline: null,
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 3500000 }]
             }
         }
@@ -63,12 +108,16 @@ const OFFERINGS = {
         tiers: {
             early_bird: {
                 label: 'Early Bird',
+                pool: 'early_bird',
                 deadline: '2026-11-13T23:59:59+08:00',
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 2100000 }]
             },
             standard: {
                 label: 'Standard Rate',
+                pool: 'standard',
                 deadline: null,
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 2500000 }]
             }
         }
@@ -78,12 +127,16 @@ const OFFERINGS = {
         tiers: {
             early_bird: {
                 label: 'Early Bird',
+                pool: 'early_bird',
                 deadline: '2026-10-23T23:59:59+08:00',
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 650000 }]
             },
             standard: {
                 label: 'Standard Rate',
+                pool: 'standard',
                 deadline: null,
+                note: 'Paid in full',
                 installments: [{ label: 'Full Payment (today)', amountCentavos: 800000 }]
             }
         }
@@ -94,17 +147,66 @@ function getOffering(slug) {
     return OFFERINGS[slug] || null;
 }
 
-// Returns null if the offering/tier doesn't exist, or the tier's early-bird
-// deadline has already passed. totalCentavos is derived (sum of all
-// installments), not stored, so it can never drift out of sync.
-function getTier(offeringSlug, tierKey) {
-    const offering = getOffering(offeringSlug);
-    if (!offering) return null;
-    const tier = offering.tiers[tierKey];
-    if (!tier) return null;
-    if (tier.deadline && new Date() > new Date(tier.deadline)) return null;
-    const totalCentavos = tier.installments.reduce((sum, i) => sum + i.amountCentavos, 0);
-    return { ...tier, offeringTitle: offering.title, totalCentavos };
+function activePromo(tier, now) {
+    return (tier.promos || []).find((p) =>
+        (!p.startsAt || now >= new Date(p.startsAt)) && (!p.endsAt || now <= new Date(p.endsAt))
+    ) || null;
 }
 
-module.exports = { OFFERINGS, getOffering, getTier };
+// A pool is closed once every tier drawing from it is past its deadline, or
+// the cohort has no slots left in it. `slots` is { early_bird: n|null,
+// standard: n|null } from slots.js -- null means no cap.
+function poolClosed(offering, pool, slots, now) {
+    if (slots && slots[pool] != null && slots[pool] <= 0) return true;
+    const tiers = Object.values(offering.tiers).filter((t) => t.pool === pool);
+    return tiers.length > 0 && tiers.every((t) => t.deadline && now > new Date(t.deadline));
+}
+
+// Resolves every tier of an offering for display + checkout: applies any
+// active promo, then works out whether it can be bought right now.
+// status: 'open' | 'ended' | 'sold_out' | 'not_yet_open'.
+// totalCentavos is derived (sum of all installments), not stored, so it can
+// never drift out of sync.
+function resolveOffering(offeringSlug, slots, now = new Date()) {
+    const offering = getOffering(offeringSlug);
+    if (!offering) return null;
+
+    const tiers = Object.entries(offering.tiers).map(([key, base]) => {
+        const promo = activePromo(base, now);
+        const tier = promo
+            ? { ...base, label: promo.label || base.label, note: promo.note || base.note, installments: promo.installments || base.installments }
+            : base;
+
+        let status = 'open';
+        if (tier.deadline && now > new Date(tier.deadline)) status = 'ended';
+        else if (slots && slots[tier.pool] != null && slots[tier.pool] <= 0) status = 'sold_out';
+        else if (tier.opensAfterPoolCloses && !poolClosed(offering, tier.opensAfterPoolCloses, slots, now)) status = 'not_yet_open';
+
+        return {
+            key,
+            label: tier.label,
+            note: tier.note || null,
+            pool: tier.pool,
+            deadline: tier.deadline,
+            installments: tier.installments,
+            totalCentavos: tier.installments.reduce((sum, i) => sum + i.amountCentavos, 0),
+            dueTodayCentavos: tier.installments[0].amountCentavos,
+            promo: promo ? { id: promo.id, badge: promo.badge || null, headline: promo.headline || null, endsAt: promo.endsAt || null } : null,
+            status
+        };
+    });
+
+    return { slug: offeringSlug, title: offering.title, tiers };
+}
+
+// Returns null if the offering/tier doesn't exist or can't be bought right
+// now (ended, sold out, or not open yet).
+function getTier(offeringSlug, tierKey, slots) {
+    const resolved = resolveOffering(offeringSlug, slots);
+    if (!resolved) return null;
+    const tier = resolved.tiers.find((t) => t.key === tierKey);
+    if (!tier || tier.status !== 'open') return null;
+    return { ...tier, offeringTitle: resolved.title };
+}
+
+module.exports = { OFFERINGS, getOffering, resolveOffering, getTier };

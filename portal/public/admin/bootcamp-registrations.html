@@ -72,7 +72,7 @@
 
         <div id="pageState" class="hidden">
             <h1 class="text-3xl font-black tracking-tight">Bootcamp Registrations</h1>
-            <p class="mt-2 text-sm text-gray-600">Everyone who's paid (or started to pay) for a live cohort bootcamp via clmits.com. Follow up with the Pre-Work Starter Pack and Zoom link once they show as Paid.</p>
+            <p class="mt-2 text-sm text-gray-600">Everyone who's paid (or started to pay) for a live cohort bootcamp via clmits.com. Follow up with the Pre-Work Starter Pack and Zoom link once they show as Paid. Unpaid registrations don't hold a slot &mdash; send them a payment reminder (fresh payment link + slots-left count) to close the registration.</p>
 
             <div id="statChips" class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4"></div>
 
@@ -85,7 +85,13 @@
                     <input type="checkbox" id="paidOnlyFilter" class="h-4 w-4">
                     Paid only
                 </label>
+                <label class="flex shrink-0 items-center gap-2 text-sm font-bold text-gray-600">
+                    <input type="checkbox" id="unpaidOnlyFilter" class="h-4 w-4">
+                    Unpaid only
+                </label>
+                <button type="button" id="remindAllBtn" class="ml-auto hidden rounded-lg bg-amber-500 px-3 py-2 text-xs font-black text-white hover:brightness-110 disabled:opacity-60"></button>
             </div>
+            <p id="remindAllResult" class="mt-2 text-right text-xs font-bold"></p>
 
             <div class="mt-5 overflow-x-auto rounded-xl border border-line bg-white">
                 <table class="w-full text-left text-sm">
@@ -225,6 +231,60 @@
                 </tr>`;
         }
 
+        // email|offering of every paid registration -- an unpaid row whose
+        // person already paid through a second checkout needs no reminder.
+        let paidKeys = new Set();
+        const regKey = (r) => `${r.email.toLowerCase()}|${r.offering_slug}`;
+        function needsReminder(r) {
+            return r.status !== 'paid' && !paidKeys.has(regKey(r));
+        }
+
+        function reminderNote(count, at) {
+            if (!count) return 'Not reminded yet';
+            return `Reminded ${count}&times; &middot; last ${fmtDate(at)}`;
+        }
+
+        function renderReminderCell(r) {
+            if (r.status === 'paid') return '';
+            if (!needsReminder(r)) {
+                return '<div class="mb-2 text-[11px] font-bold text-emerald-600">Paid via another registration</div>';
+            }
+            return `
+                <div class="mb-2">
+                    <button type="button" class="remindBtn rounded-md bg-amber-500 px-2.5 py-1 text-[11px] font-black text-white hover:brightness-110 disabled:opacity-60" data-reg="${r.id}">Send Payment Reminder</button>
+                    <div class="mt-1 text-[11px] text-gray-400" data-remind-note="${r.id}">${reminderNote(r.reminder_count, r.last_reminded_at)}</div>
+                    <div class="mt-1 text-[11px] font-bold break-all" data-remind-result="${r.id}"></div>
+                </div>`;
+        }
+
+        async function sendReminder(regId) {
+            const btn = document.querySelector(`.remindBtn[data-reg="${regId}"]`);
+            const resultEl = document.querySelector(`[data-remind-result="${regId}"]`);
+            if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+
+            const { ok, data } = await apiFetch('admin-send-payment-reminder', {
+                method: 'POST',
+                body: JSON.stringify({ registrationId: regId })
+            });
+
+            if (btn) { btn.disabled = false; btn.textContent = 'Send Payment Reminder'; }
+            if (!ok) {
+                resultEl.textContent = (data && data.error) || 'Could not send reminder.';
+                resultEl.className = 'mt-1 text-[11px] font-bold text-red-600 break-all';
+                return false;
+            }
+
+            const copy = `<button type="button" class="copyLinkBtn text-signal hover:underline" data-link="${escapeHtml(data.checkoutUrl)}">Copy link</button>`;
+            if (data.emailSent) {
+                document.querySelector(`[data-remind-note="${regId}"]`).innerHTML = reminderNote(data.reminderCount, data.lastRemindedAt);
+                resultEl.innerHTML = `<span class="text-emerald-600">Email sent ✓</span> &middot; ${copy}`;
+            } else {
+                resultEl.innerHTML = `<span class="text-amber-600">Email failed &mdash; send the link by SMS/Messenger:</span> ${copy}`;
+            }
+            resultEl.className = 'mt-1 text-[11px] font-bold break-all';
+            return data.emailSent;
+        }
+
         function renderRow(r) {
             const hasPlan = r.installments.length > 0;
             const amountCell = `
@@ -245,7 +305,10 @@
                     <td class="px-4 py-3">${amountCell}</td>
                     <td class="px-4 py-3">${statusBadge(r.status)}</td>
                     <td class="px-4 py-3 text-gray-600">${fmtDate(r.paid_at || r.created_at)}</td>
-                    <td class="px-4 py-3"><button type="button" class="addCohortBtn text-xs font-bold text-signal hover:underline" data-reg="${r.id}">+ Add to Cohort</button></td>
+                    <td class="px-4 py-3">
+                        ${renderReminderCell(r)}
+                        <button type="button" class="addCohortBtn text-xs font-bold text-signal hover:underline" data-reg="${r.id}">+ Add to Cohort</button>
+                    </td>
                 </tr>`;
 
             return mainRow + (hasPlan ? renderPlanDetailRow(r) : '') + renderAddCohortRow(r);
@@ -268,7 +331,7 @@
         function renderStats(regs) {
             const total = regs.length;
             const paid = regs.filter((r) => r.status === 'paid');
-            const pending = regs.filter((r) => r.status === 'pending').length;
+            const unpaid = regs.filter(needsReminder).length;
             const totalRevenueCentavos = paid.reduce((sum, r) => sum + (r.amount_centavos || 0), 0);
 
             const chip = (num, label) => `
@@ -280,7 +343,7 @@
             document.getElementById('statChips').innerHTML =
                 chip(total, 'Total Registrations') +
                 chip(paid.length, 'Paid') +
-                chip(pending, 'Pending') +
+                chip(unpaid, 'Unpaid &mdash; Needs Follow-up') +
                 chip(fmtPeso(totalRevenueCentavos), 'Revenue Collected');
         }
 
@@ -318,6 +381,7 @@
             document.getElementById('pageState').classList.remove('hidden');
 
             const regs = data.registrations;
+            paidKeys = new Set(regs.filter((r) => r.status === 'paid').map(regKey));
             renderStats(regs);
             document.getElementById('regsBody').innerHTML = regs.map(renderRow).join('');
 
@@ -341,12 +405,19 @@
                     return;
                 }
 
+                const remindBtn = e.target.closest('.remindBtn');
+                if (remindBtn) {
+                    await sendReminder(remindBtn.dataset.reg);
+                    return;
+                }
+
                 const copyBtn = e.target.closest('.copyLinkBtn');
                 if (copyBtn) {
                     try {
                         await navigator.clipboard.writeText(copyBtn.dataset.link);
+                        const originalText = copyBtn.textContent;
                         copyBtn.textContent = 'Copied!';
-                        setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+                        setTimeout(() => { copyBtn.textContent = originalText; }, 1500);
                     } catch (err) { /* clipboard access denied -- link is still visible to select manually */ }
                     return;
                 }
@@ -418,17 +489,21 @@
 
             const searchInput = document.getElementById('searchInput');
             const paidOnlyFilter = document.getElementById('paidOnlyFilter');
+            const unpaidOnlyFilter = document.getElementById('unpaidOnlyFilter');
+            paidOnlyFilter.addEventListener('change', () => { if (paidOnlyFilter.checked) unpaidOnlyFilter.checked = false; });
+            unpaidOnlyFilter.addEventListener('change', () => { if (unpaidOnlyFilter.checked) paidOnlyFilter.checked = false; });
             function applyFilter() {
                 const q = searchInput.value.trim().toLowerCase();
                 const offering = offeringFilter.value;
                 const paidOnly = paidOnlyFilter.checked;
+                const unpaidOnly = unpaidOnlyFilter.checked;
                 let visibleCount = 0;
                 // Only rows with data-q are registration rows; a planDetailRow
                 // has neither and always follows its own registration row.
                 document.querySelectorAll('#regsBody tr[data-q]').forEach((row) => {
                     const matchesSearch = !q || row.dataset.q.includes(q);
                     const matchesOffering = !offering || row.dataset.offering === offering;
-                    const matchesPaid = !paidOnly || row.dataset.status === 'paid';
+                    const matchesPaid = (!paidOnly || row.dataset.status === 'paid') && (!unpaidOnly || row.dataset.status !== 'paid');
                     const show = matchesSearch && matchesOffering && matchesPaid;
                     row.style.display = show ? '' : 'none';
                     if (show) visibleCount += 1;
@@ -443,6 +518,33 @@
             searchInput.addEventListener('input', applyFilter);
             offeringFilter.addEventListener('change', applyFilter);
             paidOnlyFilter.addEventListener('change', applyFilter);
+            unpaidOnlyFilter.addEventListener('change', applyFilter);
+
+            // Sends one at a time, not in parallel -- each creates a PayMongo
+            // session and an SMTP send, and a burst could trip rate limits.
+            const remindAllBtn = document.getElementById('remindAllBtn');
+            const remindAllResult = document.getElementById('remindAllResult');
+            const toRemind = regs.filter(needsReminder);
+            if (toRemind.length) {
+                remindAllBtn.textContent = `Remind all unpaid (${toRemind.length})`;
+                remindAllBtn.classList.remove('hidden');
+            }
+            remindAllBtn.addEventListener('click', async () => {
+                if (!confirm(`Email a payment reminder with a fresh payment link to ${toRemind.length} unpaid registrant(s)?`)) return;
+                remindAllBtn.disabled = true;
+                let sent = 0;
+                for (let i = 0; i < toRemind.length; i++) {
+                    remindAllResult.textContent = `Sending ${i + 1} of ${toRemind.length}…`;
+                    remindAllResult.className = 'mt-2 text-right text-xs font-bold text-gray-500';
+                    if (await sendReminder(toRemind[i].id)) sent += 1;
+                }
+                remindAllBtn.disabled = false;
+                const failed = toRemind.length - sent;
+                remindAllResult.textContent = failed
+                    ? `${sent} sent, ${failed} not sent — see the red/amber notes on those rows.`
+                    : `All ${sent} reminders sent ✓`;
+                remindAllResult.className = `mt-2 text-right text-xs font-bold ${failed ? 'text-amber-600' : 'text-emerald-600'}`;
+            });
         })();
     </script>
 </body>

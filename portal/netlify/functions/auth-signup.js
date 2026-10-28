@@ -16,9 +16,13 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
     }
 
+    const fullName = String(body.fullName || '').trim().replace(/\s+/g, ' ');
     const email = String(body.email || '').trim().toLowerCase();
     const password = String(body.password || '');
 
+    if (fullName.length < 2 || fullName.length > 120) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Enter your full name.' }) };
+    }
     if (!EMAIL_RE.test(email)) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Enter a valid email address.' }) };
     }
@@ -35,8 +39,8 @@ exports.handler = async (event) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const [user] = await sql`
-        insert into users (email, password_hash)
-        values (${email}, ${passwordHash})
+        insert into users (email, password_hash, full_name)
+        values (${email}, ${passwordHash}, ${fullName})
         returning id, email
     `;
 

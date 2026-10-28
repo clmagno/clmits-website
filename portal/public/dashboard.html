@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QBSRH8GYGQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-QBSRH8GYGQ');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex">
@@ -40,6 +48,14 @@
                 <p class="mt-1 text-sm text-amber-900">You're signed in with a temporary password. Please change it now to secure your account.</p>
             </div>
             <a href="account.html" class="mt-4 inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 sm:mt-0">Change Password</a>
+        </div>
+
+        <div id="nameBanner" class="mb-8 hidden rounded-xl border border-amber-300 bg-amber-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
+            <div>
+                <p class="text-xs font-black uppercase tracking-wide text-amber-800">Action Needed</p>
+                <p class="mt-1 text-sm text-amber-900">We don't have your name yet. Please add it so your instructor knows who you are.</p>
+            </div>
+            <a href="account.html" class="mt-4 inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-black text-white transition hover:-translate-y-0.5 sm:mt-0">Add Your Name</a>
         </div>
 
         <div id="cohortSection" class="mb-14 hidden">
@@ -253,6 +269,9 @@
             }
             if (session.mustChangePassword) {
                 document.getElementById('passwordBanner').classList.remove('hidden');
+            }
+            if (!session.fullName) {
+                document.getElementById('nameBanner').classList.remove('hidden');
             }
             renderSubscriptionBanner(session.subscription);
             renderCohortSection(session.cohort);

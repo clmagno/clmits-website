@@ -2,7 +2,7 @@ const { getDb } = require('./_lib/db');
 const { createCheckoutSession } = require('./_lib/paymongo');
 const { getTier, resolveOffering } = require('./_lib/bootcampPricing');
 const { getOfferingSlots } = require('./_lib/slots');
-const { getEarlyBirdOverride } = require('./_lib/pricingOverrides');
+const { getPricingOverride } = require('./_lib/pricingOverrides');
 
 // Called cross-origin from clmits.com (a separate static site/domain), not
 // from a portal.clmits.com page -- unlike every other function here, this
@@ -56,11 +56,11 @@ exports.handler = async (event) => {
 
     const sql = getDb();
     const slots = await getOfferingSlots(sql, offeringSlug);
-    const earlyBirdDeadline = await getEarlyBirdOverride(sql, offeringSlug);
+    const override = await getPricingOverride(sql, offeringSlug);
 
-    const tier = getTier(offeringSlug, tierKey, slots, earlyBirdDeadline);
+    const tier = getTier(offeringSlug, tierKey, slots, override);
     if (!tier) {
-        const resolved = resolveOffering(offeringSlug, slots, earlyBirdDeadline);
+        const resolved = resolveOffering(offeringSlug, slots, override);
         const match = resolved && resolved.tiers.find((t) => t.key === tierKey);
         const error = match && match.status === 'sold_out'
             ? 'Sorry — those slots just filled up. Please refresh the page to see what’s still available.'

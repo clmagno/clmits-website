@@ -27,7 +27,9 @@
 //                installments; once it ends the tier reverts on its own.
 //                Registrations keep whatever schedule they signed up under
 //                (installments are copied into bootcamp_installments).
-//                To run a new promo, add an entry here -- nothing else.
+//                Promos can also be run from admin/pricing.html without a
+//                deploy (offering_promos table, see promoFromRow); those
+//                take priority over the ones here.
 //
 // All dates are Asia/Manila (+08:00).
 
@@ -150,16 +152,70 @@ function getOffering(slug) {
     return OFFERINGS[slug] || null;
 }
 
-// The offering with an admin-set Early Bird deadline (ISO string or Date,
-// or null for none) swapped into every early_bird-pool tier. Everything
-// that checks a deadline must go through this, not getOffering().
-function effectiveOffering(slug, earlyBirdDeadline) {
+const MAX_PROMO_INSTALLMENTS = 6;
+
+function tierTotal(tier) {
+    return tier.installments.reduce((sum, i) => sum + i.amountCentavos, 0);
+}
+
+function pesoText(centavos) {
+    return `₱${(centavos / 100).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+}
+
+// A down-payment promo keeps the tier's total: DP today, then the rest in
+// `count` monthly installments of whole pesos (any remainder goes on the
+// last one).
+function promoInstallments(totalCentavos, downPaymentCentavos, count) {
+    const remaining = totalCentavos - downPaymentCentavos;
+    const each = Math.floor(remaining / count / 100) * 100;
+    const out = [{ label: 'Down Payment (today)', amountCentavos: downPaymentCentavos }];
+    for (let i = 1; i <= count; i++) {
+        out.push({ label: `Monthly Installment ${i}`, amountCentavos: i === count ? remaining - each * (count - 1) : each });
+    }
+    return out;
+}
+
+// Turns an offering_promos row into the same shape as a promo written in
+// OFFERINGS above.
+function promoFromRow(baseTier, row) {
+    const installments = promoInstallments(tierTotal(baseTier), row.down_payment_centavos, row.installment_count);
+    const rest = installments.slice(1).map((i) => i.amountCentavos);
+    const last = rest[rest.length - 1];
+    const note = rest.length === 1
+        ? `+ 1 monthly installment of ${pesoText(last)}`
+        : rest.every((a) => a === rest[0])
+            ? `+ ${rest.length} equal monthly installments of ${pesoText(rest[0])}`
+            : `+ ${rest.length} monthly installments of ${pesoText(rest[0])} (last one ${pesoText(last)})`;
+    return {
+        id: `promo-${row.id}`,
+        badge: row.badge,
+        headline: row.headline || null,
+        label: `${baseTier.label.replace(/\s*\(.*\)$/, '')} (${row.badge})`,
+        startsAt: new Date(row.starts_at).toISOString(),
+        endsAt: new Date(row.ends_at).toISOString(),
+        note,
+        installments
+    };
+}
+
+// The offering with admin overrides applied (from pricingOverrides.js):
+//   earlyBirdDeadline -- swapped into every early_bird-pool tier
+//   promos            -- offering_promos rows, put ahead of code promos
+// Everything that checks a deadline or promo must go through this, not
+// getOffering().
+function effectiveOffering(slug, override) {
     const offering = getOffering(slug);
-    if (!offering || !earlyBirdDeadline) return offering;
-    const deadline = new Date(earlyBirdDeadline).toISOString();
+    if (!offering || !override) return offering;
+    const deadline = override.earlyBirdDeadline ? new Date(override.earlyBirdDeadline).toISOString() : null;
+    const rows = override.promos || [];
     const tiers = {};
     for (const [key, tier] of Object.entries(offering.tiers)) {
-        tiers[key] = tier.pool === 'early_bird' ? { ...tier, deadline } : tier;
+        const dbPromos = rows.filter((r) => r.tier_key === key).map((r) => promoFromRow(tier, r));
+        tiers[key] = {
+            ...tier,
+            ...(deadline && tier.pool === 'early_bird' ? { deadline } : {}),
+            promos: [...dbPromos, ...(tier.promos || [])]
+        };
     }
     return { ...offering, tiers };
 }
@@ -191,8 +247,8 @@ function poolClosed(offering, pool, slots, now) {
 // status: 'open' | 'ended' | 'sold_out' | 'not_yet_open'.
 // totalCentavos is derived (sum of all installments), not stored, so it can
 // never drift out of sync.
-function resolveOffering(offeringSlug, slots, earlyBirdDeadline = null, now = new Date()) {
-    const offering = effectiveOffering(offeringSlug, earlyBirdDeadline);
+function resolveOffering(offeringSlug, slots, override = null, now = new Date()) {
+    const offering = effectiveOffering(offeringSlug, override);
     if (!offering) return null;
 
     const tiers = Object.entries(offering.tiers).map(([key, base]) => {
@@ -225,12 +281,15 @@ function resolveOffering(offeringSlug, slots, earlyBirdDeadline = null, now = ne
 
 // Returns null if the offering/tier doesn't exist or can't be bought right
 // now (ended, sold out, or not open yet).
-function getTier(offeringSlug, tierKey, slots, earlyBirdDeadline = null) {
-    const resolved = resolveOffering(offeringSlug, slots, earlyBirdDeadline);
+function getTier(offeringSlug, tierKey, slots, override = null) {
+    const resolved = resolveOffering(offeringSlug, slots, override);
     if (!resolved) return null;
     const tier = resolved.tiers.find((t) => t.key === tierKey);
     if (!tier || tier.status !== 'open') return null;
     return { ...tier, offeringTitle: resolved.title };
 }
 
-module.exports = { OFFERINGS, getOffering, effectiveOffering, defaultEarlyBirdDeadline, resolveOffering, getTier };
+module.exports = {
+    OFFERINGS, MAX_PROMO_INSTALLMENTS, getOffering, effectiveOffering, defaultEarlyBirdDeadline,
+    tierTotal, promoInstallments, promoFromRow, resolveOffering, getTier
+};

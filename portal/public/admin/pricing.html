@@ -73,8 +73,9 @@
         <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
 
         <div id="pageState" class="hidden">
-            <h1 class="text-3xl font-black tracking-tight">Early Bird Pricing</h1>
+            <h1 class="text-3xl font-black tracking-tight">Early Bird &amp; Promos</h1>
             <p class="mt-2 text-sm text-gray-600">Extend the Early Bird deadline, end it early, or put it back to the default. Changes go live on clmits.com, checkout and payment reminders immediately. All times are Manila time; a new date closes at 11:59 PM that day.</p>
+            <p class="mt-2 text-sm text-gray-600"><strong>Promos</strong> keep an option's total and only change how it's paid: a down payment today, then the rest split into equal monthly installments. Use <em>Run again</em> on a past promo to bring it back.</p>
             <p class="mt-2 text-sm text-gray-600">People who already registered keep the price they signed up at. Where Standard Rate waits for Early Bird (Cloud + DE), it opens on its own once Early Bird closes.</p>
 
             <div id="offeringCards" class="mt-8 space-y-5"></div>
@@ -130,7 +131,7 @@
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <h2 class="text-lg font-black tracking-tight">${escapeHtml(o.title)}</h2>
-                            <p class="mt-0.5 text-xs text-gray-400">${o.tiers.map(escapeHtml).join(' &middot; ')}</p>
+                            <p class="mt-0.5 text-xs text-gray-400">${o.earlyBirdTiers.map(escapeHtml).join(' &middot; ')}</p>
                         </div>
                         ${statusBadge(o.status)}
                     </div>
@@ -153,7 +154,128 @@
                         ${o.override ? `<button type="button" class="resetBtn rounded-lg border border-line px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-paper disabled:opacity-60">Reset to default (${fmtDay(o.defaultDeadline)})</button>` : ''}
                         <p data-result class="text-xs font-bold"></p>
                     </div>
+
+                    ${renderPromos(o)}
                 </section>`;
+        }
+
+        const peso = (centavos) => '₱' + Math.round(centavos / 100).toLocaleString('en-PH');
+
+        // Mirrors bootcampPricing.js promoInstallments(): the rest after the
+        // DP split into whole-peso monthly payments, remainder on the last.
+        function promoSplit(totalCentavos, dpCentavos, count) {
+            const remaining = totalCentavos - dpCentavos;
+            const each = Math.floor(remaining / count / 100) * 100;
+            return { each, last: remaining - each * (count - 1), remaining };
+        }
+
+        function promoSummary(p) {
+            const { each, last } = promoSplit(p.totalCentavos, p.downPaymentCentavos, p.installmentCount);
+            const months = p.installmentCount === 1 ? `1 &times; ${peso(last)}`
+                : each === last ? `${p.installmentCount} &times; ${peso(each)}`
+                : `${p.installmentCount - 1} &times; ${peso(each)} + ${peso(last)}`;
+            return `${peso(p.downPaymentCentavos)} DP + ${months} = ${peso(p.totalCentavos)}`;
+        }
+
+        function promoStatusBadge(status) {
+            if (status === 'active') return '<span class="rounded bg-lime-200 px-1.5 py-0.5 text-[10px] font-black uppercase text-lime-800">Live</span>';
+            if (status === 'scheduled') return '<span class="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-blue-700">Scheduled</span>';
+            return '<span class="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-gray-500">Ended</span>';
+        }
+
+        function renderPromoRow(o, p) {
+            const dates = `${p.startsAt ? fmtDay(p.startsAt) : '…'} &ndash; ${p.endsAt ? fmtDeadline(p.endsAt) : 'no end'}`;
+            let action = '';
+            if (p.status === 'ended') {
+                action = `<button type="button" class="runAgainBtn rounded-lg border border-line px-2.5 py-1 text-[11px] font-black hover:bg-paper" data-promo="${escapeHtml(p.id)}">Run again</button>`;
+            } else if (p.source === 'admin') {
+                action = `<button type="button" class="endPromoBtn rounded-lg border border-red-200 px-2.5 py-1 text-[11px] font-black text-red-600 hover:bg-red-50 disabled:opacity-60" data-promo="${escapeHtml(p.id)}">${p.status === 'scheduled' ? 'Cancel' : 'End promo'}</button>`;
+            } else {
+                action = '<span class="text-[11px] text-gray-400">Set in code</span>';
+            }
+            return `
+                <div class="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-line px-3 py-2 ${p.status === 'ended' ? 'bg-paper' : ''}">
+                    <div class="text-xs">
+                        <div class="flex flex-wrap items-center gap-2"><span class="font-black">${escapeHtml(p.badge)}</span>${promoStatusBadge(p.status)}</div>
+                        <div class="mt-0.5 text-gray-600">${promoSummary(p)} &middot; ${escapeHtml(p.tierLabel)}</div>
+                        <div class="mt-0.5 text-gray-400">${dates}${p.createdBy ? ` &middot; by ${escapeHtml(p.createdBy)}` : ''}</div>
+                    </div>
+                    ${action}
+                </div>`;
+        }
+
+        function renderPromos(o) {
+            const today = manilaYMD(new Date());
+            const tierOptions = o.tiers.map((t) =>
+                `<option value="${t.key}" data-total="${t.totalCentavos}" ${t.key.includes('installment') ? 'selected' : ''}>${escapeHtml(t.label)} &mdash; ${peso(t.totalCentavos)} total${t.status === 'open' ? '' : ` (${t.status.replace(/_/g, ' ')})`}</option>`
+            ).join('');
+            const countOptions = [1, 2, 3, 4, 5, 6].map((n) => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n}</option>`).join('');
+            return `
+                <div class="mt-6 border-t border-line pt-4">
+                    <div class="flex items-center justify-between gap-2">
+                        <h3 class="text-sm font-black">Promos</h3>
+                        <button type="button" class="newPromoBtn rounded-lg bg-lime-400 px-3 py-1.5 text-xs font-black text-ink hover:brightness-105">+ New Promo</button>
+                    </div>
+                    <div class="mt-3 space-y-2">
+                        ${o.promos.length ? o.promos.map((p) => renderPromoRow(o, p)).join('') : '<p class="text-xs text-gray-400">No promos yet.</p>'}
+                    </div>
+
+                    <form data-promo-form class="mt-4 hidden rounded-lg border border-lime-300 bg-lime-50 p-4">
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <label class="text-xs font-bold text-gray-600 sm:col-span-2">Payment option
+                                <select name="tierKey" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">${tierOptions}</select>
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Down payment (₱)
+                                <input name="downPayment" type="number" min="1" step="1" value="5000" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Monthly installments after the DP
+                                <select name="installmentCount" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">${countOptions}</select>
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Starts
+                                <input name="startDate" type="date" min="${today}" value="${today}" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Ends (11:59 PM)
+                                <input name="endDate" type="date" min="${today}" value="${addDays(today, 3)}" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Badge
+                                <input name="badge" maxlength="40" required class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">
+                            </label>
+                            <label class="text-xs font-bold text-gray-600">Headline (top banner)
+                                <input name="headline" maxlength="120" class="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-2 py-1.5 text-sm outline-none focus:border-ink">
+                            </label>
+                        </div>
+                        <p data-promo-preview class="mt-4 rounded-lg bg-white p-3 text-sm"></p>
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <button type="submit" class="rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white hover:brightness-110 disabled:opacity-60">Start Promo</button>
+                            <button type="button" class="cancelPromoFormBtn rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-bold hover:bg-paper">Close</button>
+                        </div>
+                    </form>
+                    <p data-promo-result class="mt-2 text-xs font-bold"></p>
+                </div>`;
+        }
+
+        // Fills the badge/headline from the DP until the admin edits them.
+        function syncPromoForm(form) {
+            const dp = Math.round(Number(form.downPayment.value) || 0);
+            if (!form.badge.dataset.touched) form.badge.value = dp ? `₱${dp.toLocaleString('en-PH')} DP Promo` : '';
+            if (!form.headline.dataset.touched) form.headline.value = dp ? `Only ₱${dp.toLocaleString('en-PH')} down payment — limited slots!` : '';
+            updatePromoPreview(form);
+        }
+
+        function updatePromoPreview(form) {
+            const preview = form.querySelector('[data-promo-preview]');
+            const total = Number(form.tierKey.selectedOptions[0].dataset.total);
+            const dp = Math.round((Number(form.downPayment.value) || 0) * 100);
+            const count = Number(form.installmentCount.value);
+            const { each, last, remaining } = promoSplit(total, dp, count);
+            if (!dp || remaining < count * 10000) {
+                preview.innerHTML = `<span class="font-bold text-red-600">Down payment must be less than ${peso(total - count * 10000)} for this option.</span>`;
+                return;
+            }
+            const months = count === 1 ? `1 monthly payment of <strong>${peso(last)}</strong>`
+                : each === last ? `<strong>${count} monthly payments of ${peso(each)}</strong>`
+                : `<strong>${count - 1} monthly payments of ${peso(each)}</strong> and a last one of <strong>${peso(last)}</strong>`;
+            preview.innerHTML = `Students pay <strong>${peso(dp)} today</strong>, then ${months}. Total stays <strong>${peso(total)}</strong>.`;
         }
 
         let offerings = [];
@@ -161,9 +283,9 @@
             document.getElementById('offeringCards').innerHTML = offerings.map(renderCard).join('');
         }
 
-        async function save(card, payload, confirmText) {
+        async function save(card, payload, confirmText, resultSelector = '[data-result]') {
             if (confirmText && !confirm(confirmText)) return;
-            const resultEl = card.querySelector('[data-result]');
+            const resultEl = card.querySelector(resultSelector);
             card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
             resultEl.textContent = 'Saving…';
             resultEl.className = 'text-xs font-bold text-gray-500';
@@ -179,9 +301,9 @@
             }
             offerings = data.offerings;
             render();
-            const fresh = document.querySelector(`[data-offering="${card.dataset.offering}"] [data-result]`);
-            fresh.textContent = 'Saved ✓ — live on the website now';
-            fresh.className = 'text-xs font-bold text-emerald-600';
+            const fresh = document.querySelector(`[data-offering="${card.dataset.offering}"] ${resultSelector}`);
+            fresh.textContent = data.warning || 'Saved ✓ — live on the website now';
+            fresh.className = `${fresh.className.replace(/text-\S+-\d+/g, '')} ${data.warning ? 'text-amber-600' : 'text-emerald-600'}`;
         }
 
         (async () => {
@@ -230,9 +352,82 @@
                 }
                 if (e.target.closest('.resetBtn')) {
                     save(card, { action: 'reset' }, `Put ${title} back to its default Early Bird deadline?`);
+                    return;
+                }
+
+                const promoForm = card.querySelector('[data-promo-form]');
+                const openPromoForm = () => {
+                    promoForm.classList.remove('hidden');
+                    syncPromoForm(promoForm);
+                    promoForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                };
+                if (e.target.closest('.newPromoBtn')) {
+                    openPromoForm();
+                    return;
+                }
+                if (e.target.closest('.cancelPromoFormBtn')) {
+                    promoForm.classList.add('hidden');
+                    return;
+                }
+                const runAgain = e.target.closest('.runAgainBtn');
+                if (runAgain) {
+                    // Same option, DP, installments, wording -- and the same
+                    // length as before, starting today.
+                    const o = offerings.find((x) => x.slug === card.dataset.offering);
+                    const p = o.promos.find((x) => x.id === runAgain.dataset.promo);
+                    const today = manilaYMD(new Date());
+                    const days = p.startsAt && p.endsAt
+                        ? Math.max(0, Math.round((new Date(manilaYMD(p.endsAt)) - new Date(manilaYMD(p.startsAt))) / 86400000))
+                        : 3;
+                    promoForm.tierKey.value = p.tierKey;
+                    promoForm.downPayment.value = p.downPaymentCentavos / 100;
+                    promoForm.installmentCount.value = String(Math.min(6, Math.max(1, p.installmentCount)));
+                    promoForm.startDate.value = today;
+                    promoForm.endDate.value = addDays(today, days);
+                    promoForm.badge.value = p.badge;
+                    promoForm.badge.dataset.touched = '1';
+                    promoForm.headline.value = p.headline || '';
+                    promoForm.headline.dataset.touched = '1';
+                    openPromoForm();
+                    return;
+                }
+                const endPromo = e.target.closest('.endPromoBtn');
+                if (endPromo) {
+                    const p = offerings.find((x) => x.slug === card.dataset.offering).promos.find((x) => x.id === endPromo.dataset.promo);
+                    save(card, { action: 'end_promo', promoId: p.id },
+                        p.status === 'scheduled' ? `Cancel "${p.badge}"? It hasn't started yet.` : `End "${p.badge}" now? The website goes back to the normal payment schedule immediately.`,
+                        '[data-promo-result]');
                 }
             });
+            cards.addEventListener('input', (e) => {
+                const form = e.target.closest('[data-promo-form]');
+                if (!form) return;
+                if (e.target.name === 'badge' || e.target.name === 'headline') e.target.dataset.touched = '1';
+                syncPromoForm(form);
+            });
+            cards.addEventListener('change', (e) => {
+                const form = e.target.closest('[data-promo-form]');
+                if (form) updatePromoPreview(form);
+            });
             cards.addEventListener('submit', (e) => {
+                const promoForm = e.target.closest('[data-promo-form]');
+                if (promoForm) {
+                    e.preventDefault();
+                    const card = promoForm.closest('[data-offering]');
+                    const f = promoForm;
+                    const optionLabel = offerings.find((x) => x.slug === card.dataset.offering).tiers.find((t) => t.key === f.tierKey.value).label;
+                    save(card, {
+                        action: 'create_promo',
+                        tierKey: f.tierKey.value,
+                        downPayment: Number(f.downPayment.value),
+                        installmentCount: Number(f.installmentCount.value),
+                        startDate: f.startDate.value,
+                        endDate: f.endDate.value,
+                        badge: f.badge.value,
+                        headline: f.headline.value
+                    }, `Start "${f.badge.value}" on ${optionLabel}?\n\n${f.querySelector('[data-promo-preview]').textContent}`, '[data-promo-result]');
+                    return;
+                }
                 const form = e.target.closest('[data-extend-form]');
                 if (!form) return;
                 e.preventDefault();

@@ -4,7 +4,7 @@ const { requireRole } = require('./_lib/roles');
 const { createCheckoutSession } = require('./_lib/paymongo');
 const { effectiveOffering } = require('./_lib/bootcampPricing');
 const { getOfferingSlots } = require('./_lib/slots');
-const { getEarlyBirdOverride } = require('./_lib/pricingOverrides');
+const { getPricingOverride } = require('./_lib/pricingOverrides');
 const { paymentReminderEmail } = require('./_lib/emailTemplates');
 const { sendMail } = require('./_lib/email');
 
@@ -66,7 +66,7 @@ exports.handler = async (event) => {
         return { statusCode: 409, body: JSON.stringify({ error: 'This person already has a paid registration for this offering.' }) };
     }
 
-    const offering = effectiveOffering(reg.offering_slug, await getEarlyBirdOverride(sql, reg.offering_slug));
+    const offering = effectiveOffering(reg.offering_slug, await getPricingOverride(sql, reg.offering_slug));
     const tierDef = offering && offering.tiers[reg.tier];
     if (!tierDef) {
         return { statusCode: 400, body: JSON.stringify({ error: 'This registration’s offering/tier no longer exists.' }) };

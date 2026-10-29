@@ -556,7 +556,7 @@
                         </div>
                         <button type="button" onclick="openReserveModal('cloud-de-bundle')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-violet-400 px-8 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
-                            <span id="cloudDeCtaNote" class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
+                            <span id="cloudDeCtaNote" data-eb-deadline="cloud-de-bundle" class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
                         </button>
                     </article>
 
@@ -602,7 +602,7 @@
                         </div>
                         <button type="button" onclick="openReserveModal('gcp-bootcamp')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-blue-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
-                            <span class="text-xs font-bold opacity-70">Ends Nov 20</span>
+                            <span data-eb-deadline="gcp-bootcamp" class="text-xs font-bold opacity-70">Early bird ends Nov 20</span>
                         </button>
                     </article>
 
@@ -648,7 +648,7 @@
                         </div>
                         <button type="button" onclick="openReserveModal('python-automation')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-amber-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
-                            <span class="text-xs font-bold opacity-70">Ends Nov 13</span>
+                            <span data-eb-deadline="python-automation" class="text-xs font-bold opacity-70">Early bird ends Nov 13</span>
                         </button>
                     </article>
 
@@ -696,7 +696,7 @@
                         </div>
                         <button type="button" onclick="openReserveModal('sql-foundations')" class="flex w-full flex-wrap items-center justify-between gap-2 bg-teal-400 px-7 py-4 text-sm font-black text-ink transition hover:brightness-105">
                             <span>Reserve your slot →</span>
-                            <span class="text-xs font-bold opacity-70">Early bird ends Oct 23</span>
+                            <span data-eb-deadline="sql-foundations" class="text-xs font-bold opacity-70">Early bird ends Oct 23</span>
                         </button>
                     </article>
                 </div>
@@ -1556,8 +1556,9 @@
             document.getElementById('cloudDePricingRows').innerHTML = o.tiers.map((t) => {
                 const closed = t.status !== 'open';
                 const save = fullPrice - t.totalCentavos;
+                const ebDeadline = earlyBirdInfo(o).deadline;
                 const how = t.status === 'not_yet_open'
-                    ? 'Opens once Early Bird slots are gone or after Nov 20'
+                    ? `Opens once Early Bird slots are gone or after ${ebDeadline ? shortDate(ebDeadline) : 'Early Bird ends'}`
                     : `${peso(t.dueTodayCentavos)} ${t.installmentCount > 1 ? 'down' : 'paid in full'}${t.installmentCount > 1 && t.note ? ', then ' + t.note.replace(/^\+\s*/, '') : ''}`;
                 const tag = t.promo && !closed
                     ? `<span class="ml-1 inline-block rounded bg-lime-400 px-1.5 py-0.5 text-[10px] font-black uppercase text-ink">${t.promo.badge || 'Promo'}</span>`
@@ -1570,6 +1571,30 @@
                         <td class="p-3">${save > 0 ? peso(save) : '—'}</td>
                     </tr>`;
             }).join('');
+        }
+
+        // Early Bird deadlines can be extended/ended from the portal admin
+        // (admin/pricing.html), so the "ends <date>" notes come from the
+        // live pricing too; the HTML text is only the no-JS fallback.
+        const shortDate = (iso) => new Date(iso).toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric' });
+
+        function earlyBirdInfo(o) {
+            const tiers = o.tiers.filter((t) => t.pool === 'early_bird');
+            return {
+                deadline: tiers.length ? tiers[0].deadline : null,
+                open: tiers.some((t) => t.status === 'open'),
+                soldOut: tiers.some((t) => t.status === 'sold_out')
+            };
+        }
+
+        function renderDeadlines() {
+            document.querySelectorAll('[data-eb-deadline]').forEach((el) => {
+                const o = bootcampPricing && bootcampPricing[el.dataset.ebDeadline];
+                if (!o) return;
+                const eb = earlyBirdInfo(o);
+                el.textContent = eb.open && eb.deadline ? `Early bird ends ${shortDate(eb.deadline)}`
+                    : eb.soldOut ? 'Early bird sold out' : 'Early bird closed';
+            });
         }
 
         function renderPromos() {
@@ -1613,11 +1638,12 @@
         loadBootcampPricing()
             .then(() => {
                 renderCloudDePricing();
+                renderDeadlines();
                 renderPromos();
                 // Tick the countdown; re-fetch every minute so slot counts and
                 // a promo ending mid-visit show up without a reload.
                 setInterval(renderPromos, 1000);
-                setInterval(() => loadBootcampPricing().then(() => { renderCloudDePricing(); renderPromos(); }).catch(() => {}), 60000);
+                setInterval(() => loadBootcampPricing().then(() => { renderCloudDePricing(); renderDeadlines(); renderPromos(); }).catch(() => {}), 60000);
             })
             .catch(() => { /* keep the static fallback rows */ });
 

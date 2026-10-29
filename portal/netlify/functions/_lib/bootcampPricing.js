@@ -14,7 +14,10 @@
 //   pool      -- which cohort slot pool it draws from ('early_bird' |
 //                'standard'), matching cohorts.capacity_early_bird /
 //                capacity_standard. When that pool is full the tier closes.
-//   deadline  -- tier closes after this instant. null = no deadline.
+//   deadline  -- tier closes after this instant. null = no deadline. For
+//                early_bird tiers this is only the DEFAULT: an admin can
+//                extend or end it from admin/pricing.html (stored in
+//                offering_pricing_overrides, see pricingOverrides.js).
 //   opensAfterPoolCloses -- tier stays hidden until the named pool is closed
 //                (past its deadline or sold out), e.g. Standard Rate only
 //                opening once Early Bird is gone.
@@ -147,6 +150,27 @@ function getOffering(slug) {
     return OFFERINGS[slug] || null;
 }
 
+// The offering with an admin-set Early Bird deadline (ISO string or Date,
+// or null for none) swapped into every early_bird-pool tier. Everything
+// that checks a deadline must go through this, not getOffering().
+function effectiveOffering(slug, earlyBirdDeadline) {
+    const offering = getOffering(slug);
+    if (!offering || !earlyBirdDeadline) return offering;
+    const deadline = new Date(earlyBirdDeadline).toISOString();
+    const tiers = {};
+    for (const [key, tier] of Object.entries(offering.tiers)) {
+        tiers[key] = tier.pool === 'early_bird' ? { ...tier, deadline } : tier;
+    }
+    return { ...offering, tiers };
+}
+
+// The default (code) Early Bird deadline of an offering, or null.
+function defaultEarlyBirdDeadline(slug) {
+    const offering = getOffering(slug);
+    const tier = offering && Object.values(offering.tiers).find((t) => t.pool === 'early_bird' && t.deadline);
+    return tier ? tier.deadline : null;
+}
+
 function activePromo(tier, now) {
     return (tier.promos || []).find((p) =>
         (!p.startsAt || now >= new Date(p.startsAt)) && (!p.endsAt || now <= new Date(p.endsAt))
@@ -167,8 +191,8 @@ function poolClosed(offering, pool, slots, now) {
 // status: 'open' | 'ended' | 'sold_out' | 'not_yet_open'.
 // totalCentavos is derived (sum of all installments), not stored, so it can
 // never drift out of sync.
-function resolveOffering(offeringSlug, slots, now = new Date()) {
-    const offering = getOffering(offeringSlug);
+function resolveOffering(offeringSlug, slots, earlyBirdDeadline = null, now = new Date()) {
+    const offering = effectiveOffering(offeringSlug, earlyBirdDeadline);
     if (!offering) return null;
 
     const tiers = Object.entries(offering.tiers).map(([key, base]) => {
@@ -201,12 +225,12 @@ function resolveOffering(offeringSlug, slots, now = new Date()) {
 
 // Returns null if the offering/tier doesn't exist or can't be bought right
 // now (ended, sold out, or not open yet).
-function getTier(offeringSlug, tierKey, slots) {
-    const resolved = resolveOffering(offeringSlug, slots);
+function getTier(offeringSlug, tierKey, slots, earlyBirdDeadline = null) {
+    const resolved = resolveOffering(offeringSlug, slots, earlyBirdDeadline);
     if (!resolved) return null;
     const tier = resolved.tiers.find((t) => t.key === tierKey);
     if (!tier || tier.status !== 'open') return null;
     return { ...tier, offeringTitle: resolved.title };
 }
 
-module.exports = { OFFERINGS, getOffering, resolveOffering, getTier };
+module.exports = { OFFERINGS, getOffering, effectiveOffering, defaultEarlyBirdDeadline, resolveOffering, getTier };

@@ -1,6 +1,7 @@
 const { getDb } = require('./_lib/db');
 const { OFFERINGS, resolveOffering } = require('./_lib/bootcampPricing');
 const { getOfferingSlots } = require('./_lib/slots');
+const { getEarlyBirdOverrides } = require('./_lib/pricingOverrides');
 
 // Public, no-auth endpoint -- called cross-origin from clmits.com, same CORS
 // pattern as public-cohorts.js. Returns live bootcamp pricing (with any
@@ -31,9 +32,10 @@ exports.handler = async (event) => {
 
     const sql = getDb();
     const offerings = {};
+    const earlyBirdOverrides = await getEarlyBirdOverrides(sql);
     for (const slug of Object.keys(OFFERINGS)) {
         const slots = await getOfferingSlots(sql, slug);
-        const resolved = resolveOffering(slug, slots);
+        const resolved = resolveOffering(slug, slots, earlyBirdOverrides[slug]);
         offerings[slug] = {
             title: resolved.title,
             slotsLeft: { early_bird: slots.early_bird, standard: slots.standard },

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+    <title>Early Bird Pricing | CL Magno I.T. Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { ink: '#050505', graphite: '#171717', paper: '#f7f7f7', line: '#dddddd', signal: '#0f8ec2' } } }
+        }
+    </script>
+    <style>
+        body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-paper text-ink antialiased">
+    <div class="flex min-h-screen">
+        <aside class="hidden w-60 shrink-0 flex-col justify-between border-r border-line bg-white md:flex">
+            <div>
+                <div class="flex h-16 items-center border-b border-line px-6">
+                    <a href="overview.html" class="text-sm font-black tracking-tight">CL Magno I.T. Solutions</a>
+                </div>
+                <nav class="space-y-1 p-4 text-sm font-bold">
+                    <a href="overview.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Overview</a>
+                    <a href="students.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Students</a>
+                    <a href="bootcamp-registrations.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Registrations</a>
+                    <a href="pricing.html" class="block rounded-lg px-3 py-2 text-ink bg-paper">Pricing</a>
+                    <a href="cohorts.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Cohorts</a>
+                    <a href="courses.html" class="block rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">Contents</a>
+                    <div class="pt-1">
+                        <button type="button" id="accountsToggle" class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-gray-600 hover:bg-paper hover:text-ink">
+                            <span>Accounts</span>
+                            <svg class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" /></svg>
+                        </button>
+                        <div id="accountsSubmenu" class="mt-1 hidden space-y-1 border-l border-line pl-3">
+                            <a href="../account.html" class="block rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:text-ink">Change Password</a>
+                            <a href="users.html" class="block rounded-lg px-3 py-1.5 text-xs text-gray-500 hover:text-ink">Manage Users</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="border-t border-line p-4">
+                <p id="userEmail" class="truncate text-xs font-bold text-gray-500"></p>
+                <div class="mt-3 flex gap-2">
+                    <a href="../dashboard.html?stay=1" class="flex-1 rounded-lg border border-line px-2 py-2 text-center text-xs font-bold hover:bg-gray-50">Your Courses</a>
+                    <button id="logoutBtn" class="flex-1 rounded-lg border border-line px-2 py-2 text-xs font-bold hover:bg-gray-50">Sign Out</button>
+                </div>
+            </div>
+        </aside>
+
+        <div class="min-w-0 flex-1">
+            <div class="flex h-14 items-center justify-between border-b border-line bg-white px-4 md:hidden">
+                <span class="text-sm font-black">CL Magno I.T. Solutions</span>
+                <button type="button" id="mobileMenuToggle" class="rounded-lg border border-line px-3 py-1.5 text-xs font-bold">Menu</button>
+            </div>
+            <div id="mobileMenuPanel" class="hidden flex-col gap-1 border-b border-line bg-white px-4 py-3 text-sm font-bold md:hidden">
+                <a href="overview.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Overview</a>
+                <a href="students.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Students</a>
+                <a href="bootcamp-registrations.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Registrations</a>
+                <a href="pricing.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Pricing</a>
+                <a href="cohorts.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Cohorts</a>
+                <a href="courses.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Contents</a>
+                <a href="../account.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Change Password</a>
+                <a href="users.html" class="rounded-lg px-2 py-1.5 hover:bg-paper">Manage Users</a>
+                <a href="../dashboard.html?stay=1" class="rounded-lg px-2 py-1.5 hover:bg-paper">Your Courses</a>
+                <button type="button" id="logoutBtnMobile" class="rounded-lg px-2 py-1.5 text-left hover:bg-paper">Sign Out</button>
+            </div>
+
+    <main class="mx-auto max-w-4xl px-5 py-12">
+        <div id="loadingState" class="py-24 text-center text-sm font-bold text-gray-500">Loading...</div>
+        <div id="deniedState" class="hidden py-24 text-center text-sm font-bold text-gray-500">You don't have access to this page.</div>
+
+        <div id="pageState" class="hidden">
+            <h1 class="text-3xl font-black tracking-tight">Early Bird Pricing</h1>
+            <p class="mt-2 text-sm text-gray-600">Extend the Early Bird deadline, end it early, or put it back to the default. Changes go live on clmits.com, checkout and payment reminders immediately. All times are Manila time; a new date closes at 11:59 PM that day.</p>
+            <p class="mt-2 text-sm text-gray-600">People who already registered keep the price they signed up at. Where Standard Rate waits for Early Bird (Cloud + DE), it opens on its own once Early Bird closes.</p>
+
+            <div id="offeringCards" class="mt-8 space-y-5"></div>
+        </div>
+    </main>
+        </div>
+    </div>
+
+    <script src="../js/portal.js"></script>
+    <script>
+        const TZ = 'Asia/Manila';
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        function fmtDeadline(iso) {
+            return new Date(iso).toLocaleString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
+        function fmtDay(iso) {
+            return new Date(iso).toLocaleDateString('en-US', { timeZone: TZ, month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        // YYYY-MM-DD of an instant, in Manila -- what a date input expects.
+        function manilaYMD(dateOrIso) {
+            return new Date(dateOrIso).toLocaleDateString('en-CA', { timeZone: TZ });
+        }
+        function addDays(ymd, days) {
+            const [y, m, d] = ymd.split('-').map(Number);
+            const dt = new Date(Date.UTC(y, m - 1, d + days));
+            return dt.toISOString().slice(0, 10);
+        }
+
+        function statusBadge(status) {
+            if (status === 'open') return '<span class="rounded-md bg-emerald-100 px-2 py-1 text-xs font-black text-emerald-700">Early Bird Open</span>';
+            if (status === 'sold_out') return '<span class="rounded-md bg-amber-100 px-2 py-1 text-xs font-black text-amber-700">Early Bird Sold Out</span>';
+            return '<span class="rounded-md bg-gray-100 px-2 py-1 text-xs font-black text-gray-500">Early Bird Ended</span>';
+        }
+
+        function overrideNote(o) {
+            if (!o.override) return `<span class="text-gray-400">Default deadline</span>`;
+            const moved = new Date(o.override.deadline) > new Date(o.defaultDeadline) ? 'Extended' : 'Changed';
+            const ended = o.status === 'ended' && new Date(o.override.deadline) < new Date(o.defaultDeadline);
+            const label = ended ? 'Ended early' : moved;
+            const by = o.override.updatedBy ? ` by ${escapeHtml(o.override.updatedBy)}` : '';
+            return `<span class="font-bold text-signal">${label}</span> <span class="text-gray-400">&middot; default was ${fmtDay(o.defaultDeadline)} &middot; changed${by} ${fmtDeadline(o.override.updatedAt)}</span>`;
+        }
+
+        function renderCard(o) {
+            const today = manilaYMD(new Date());
+            const current = manilaYMD(o.effectiveDeadline);
+            const base = current < today ? today : current;
+            const slots = o.slotsLeft == null ? 'No slot cap set' : `${o.slotsLeft} Early Bird slot${o.slotsLeft === 1 ? '' : 's'} left`;
+            return `
+                <section class="rounded-xl border border-line bg-white p-6" data-offering="${o.slug}">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg font-black tracking-tight">${escapeHtml(o.title)}</h2>
+                            <p class="mt-0.5 text-xs text-gray-400">${o.tiers.map(escapeHtml).join(' &middot; ')}</p>
+                        </div>
+                        ${statusBadge(o.status)}
+                    </div>
+
+                    <div class="mt-4 grid gap-1 text-sm">
+                        <p><span class="text-gray-500">${o.status === 'open' ? 'Closes' : 'Closed'}:</span> <span class="font-black">${fmtDeadline(o.effectiveDeadline)}</span></p>
+                        <p class="text-xs">${overrideNote(o)}</p>
+                        <p class="text-xs text-gray-500">${slots}</p>
+                    </div>
+
+                    <form data-extend-form class="mt-5 flex flex-wrap items-center gap-2 border-t border-line pt-4">
+                        <label class="text-xs font-bold text-gray-600" for="date-${o.slug}">New deadline</label>
+                        <input id="date-${o.slug}" type="date" name="date" min="${today}" value="${base}" required class="rounded-lg border border-gray-300 px-2 py-1.5 text-sm outline-none focus:border-ink">
+                        <button type="button" class="quickBtn rounded-lg border border-line px-2.5 py-1.5 text-xs font-bold hover:bg-paper" data-days="3" data-base="${base}">+3 days</button>
+                        <button type="button" class="quickBtn rounded-lg border border-line px-2.5 py-1.5 text-xs font-bold hover:bg-paper" data-days="7" data-base="${base}">+7 days</button>
+                        <button type="submit" class="rounded-lg bg-ink px-3 py-1.5 text-xs font-black text-white hover:brightness-110 disabled:opacity-60">Save Deadline</button>
+                    </form>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                        ${o.status === 'open' ? '<button type="button" class="endNowBtn rounded-lg border border-red-200 px-3 py-1.5 text-xs font-black text-red-600 hover:bg-red-50 disabled:opacity-60">End Early Bird Now</button>' : ''}
+                        ${o.override ? `<button type="button" class="resetBtn rounded-lg border border-line px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-paper disabled:opacity-60">Reset to default (${fmtDay(o.defaultDeadline)})</button>` : ''}
+                        <p data-result class="text-xs font-bold"></p>
+                    </div>
+                </section>`;
+        }
+
+        let offerings = [];
+        function render() {
+            document.getElementById('offeringCards').innerHTML = offerings.map(renderCard).join('');
+        }
+
+        async function save(card, payload, confirmText) {
+            if (confirmText && !confirm(confirmText)) return;
+            const resultEl = card.querySelector('[data-result]');
+            card.querySelectorAll('button').forEach((b) => { b.disabled = true; });
+            resultEl.textContent = 'Saving…';
+            resultEl.className = 'text-xs font-bold text-gray-500';
+            const { ok, data } = await apiFetch('admin-pricing', {
+                method: 'POST',
+                body: JSON.stringify({ offeringSlug: card.dataset.offering, ...payload })
+            });
+            if (!ok) {
+                card.querySelectorAll('button').forEach((b) => { b.disabled = false; });
+                resultEl.textContent = (data && data.error) || 'Could not save.';
+                resultEl.className = 'text-xs font-bold text-red-600';
+                return;
+            }
+            offerings = data.offerings;
+            render();
+            const fresh = document.querySelector(`[data-offering="${card.dataset.offering}"] [data-result]`);
+            fresh.textContent = 'Saved ✓ — live on the website now';
+            fresh.className = 'text-xs font-bold text-emerald-600';
+        }
+
+        (async () => {
+            const session = await requireAuth();
+            if (!session) return;
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            document.getElementById('logoutBtnMobile').addEventListener('click', logout);
+            document.getElementById('userEmail').textContent = session.email;
+            document.getElementById('accountsToggle').addEventListener('click', () => {
+                document.getElementById('accountsSubmenu').classList.toggle('hidden');
+            });
+            document.getElementById('mobileMenuToggle').addEventListener('click', () => {
+                document.getElementById('mobileMenuPanel').classList.toggle('flex');
+                document.getElementById('mobileMenuPanel').classList.toggle('hidden');
+            });
+
+            if (session.role !== 'admin') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('deniedState').classList.remove('hidden');
+                return;
+            }
+
+            const { ok, data } = await apiFetch('admin-pricing');
+            if (!ok) {
+                document.getElementById('loadingState').textContent = (data && data.error) || 'Could not load pricing.';
+                return;
+            }
+            offerings = data.offerings;
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pageState').classList.remove('hidden');
+            render();
+
+            const cards = document.getElementById('offeringCards');
+            cards.addEventListener('click', (e) => {
+                const card = e.target.closest('[data-offering]');
+                if (!card) return;
+                const title = card.querySelector('h2').textContent;
+                const quick = e.target.closest('.quickBtn');
+                if (quick) {
+                    card.querySelector('input[name="date"]').value = addDays(quick.dataset.base, Number(quick.dataset.days));
+                    return;
+                }
+                if (e.target.closest('.endNowBtn')) {
+                    save(card, { action: 'end_now' }, `End Early Bird for ${title} right now? The website and checkout stop offering Early Bird immediately.`);
+                    return;
+                }
+                if (e.target.closest('.resetBtn')) {
+                    save(card, { action: 'reset' }, `Put ${title} back to its default Early Bird deadline?`);
+                }
+            });
+            cards.addEventListener('submit', (e) => {
+                const form = e.target.closest('[data-extend-form]');
+                if (!form) return;
+                e.preventDefault();
+                const card = form.closest('[data-offering]');
+                const date = form.date.value;
+                const pretty = new Date(`${date}T12:00:00+08:00`).toLocaleDateString('en-US', { timeZone: TZ, month: 'long', day: 'numeric', year: 'numeric' });
+                save(card, { action: 'extend', date }, `Set the Early Bird deadline for ${card.querySelector('h2').textContent} to ${pretty}, 11:59 PM (Manila)?`);
+            });
+        })();
+    </script>
+</body>
+</html>

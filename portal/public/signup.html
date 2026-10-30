@@ -49,6 +49,12 @@
                     <input type="password" id="password" name="password" autocomplete="new-password" required minlength="8" class="block w-full rounded-xl border border-gray-300 bg-paper px-4 py-3 text-sm outline-none transition focus:border-ink focus:bg-white focus:ring-4 focus:ring-black/5" placeholder="At least 8 characters">
                 </div>
 
+                <!-- Honeypot: hidden from people, filled in by form-filling bots (see auth-signup.js). -->
+                <div aria-hidden="true" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">
+                    <label for="website">Website</label>
+                    <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+                </div>
+
                 <p id="formError" class="hidden rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-700"></p>
 
                 <button type="submit" id="submitBtn" class="w-full rounded-xl bg-ink px-6 py-3.5 text-sm font-black text-white transition hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-black/10">
@@ -64,6 +70,7 @@
 
     <script src="js/portal.js"></script>
     <script>
+        const formOpenedAt = Date.now();
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const errorEl = document.getElementById('formError');
@@ -78,7 +85,12 @@
 
             const { ok, data } = await apiFetch('auth-signup', {
                 method: 'POST',
-                body: JSON.stringify({ fullName, email, password })
+                body: JSON.stringify({
+                    fullName, email, password,
+                    website: document.getElementById('website').value,
+                    // Measured on this device only, so a wrong clock can't trip it.
+                    elapsedMs: Date.now() - formOpenedAt
+                })
             });
 
             if (!ok) {

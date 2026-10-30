@@ -4,6 +4,15 @@ const { signSessionCookie } = require('./_lib/auth');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Bot signups (gibberish names, dotted Gmail addresses) were landing in the
+// users table. Two cheap checks, invisible to people:
+//   - `website` is a honeypot field hidden off-screen in signup.html; form-
+//     filling bots fill it in. They get a fake success so they don't retry.
+//   - `elapsedMs` is how long the form was open (measured client-side, so
+//     clock skew doesn't matter). Bots submit instantly or POST straight to
+//     this endpoint without it.
+const MIN_FORM_MS = 2500;
+
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
@@ -14,6 +23,16 @@ exports.handler = async (event) => {
         body = JSON.parse(event.body || '{}');
     } catch (err) {
         return { statusCode: 400, body: JSON.stringify({ error: 'Invalid request body' }) };
+    }
+
+    if (String(body.website || '').trim()) {
+        console.log('Signup honeypot tripped:', String(body.email || '').slice(0, 120));
+        return { statusCode: 201, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ok: true }) };
+    }
+    const elapsedMs = Number(body.elapsedMs);
+    if (!Number.isFinite(elapsedMs) || elapsedMs < MIN_FORM_MS) {
+        console.log('Signup rejected as too fast:', body.elapsedMs, String(body.email || '').slice(0, 120));
+        return { statusCode: 400, body: JSON.stringify({ error: 'Please take a moment to check your details, then try again.' }) };
     }
 
     const fullName = String(body.fullName || '').trim().replace(/\s+/g, ' ');

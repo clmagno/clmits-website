@@ -48,6 +48,16 @@
             <h1 id="courseTitle" class="text-4xl font-black tracking-[-0.04em]"></h1>
             <p id="courseDescription" class="mt-3 max-w-3xl text-base leading-7 text-gray-700"></p>
 
+            <div id="courseProgress" class="mt-6 hidden max-w-3xl">
+                <div class="flex items-center justify-between text-xs font-bold">
+                    <span id="courseProgressLabel" class="text-gray-600"></span>
+                    <span id="courseProgressPct" class="text-signal"></span>
+                </div>
+                <div class="mt-2 h-2 rounded-full bg-gray-200">
+                    <div id="courseProgressBar" class="h-2 rounded-full bg-signal transition-all" style="width: 0%"></div>
+                </div>
+            </div>
+
             <div id="subscribeBanner" class="mt-6 hidden rounded-xl border border-amber-300 bg-amber-50 p-5 sm:flex sm:items-center sm:justify-between sm:gap-6">
                 <div>
                     <p class="text-xs font-black uppercase tracking-wide text-amber-700">Subscription Required</p>
@@ -78,9 +88,12 @@
                     </div>
 
                     <div id="quizCard" class="hidden rounded-xl border border-line bg-white p-6 shadow-[0_5px_0_rgba(0,0,0,0.08)] sm:p-8">
-                        <div class="flex items-center justify-between">
-                            <h4 class="text-xs font-black uppercase tracking-wide text-gray-500">Knowledge Check</h4>
-                            <button type="button" id="startQuizBtn" class="rounded-lg bg-ink px-4 py-2 text-xs font-black text-white transition hover:-translate-y-0.5">Take the Quiz</button>
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <h4 class="text-xs font-black uppercase tracking-wide text-gray-500">Knowledge Check</h4>
+                                <p id="quizLastScore" class="mt-1 hidden text-xs font-bold text-signal"></p>
+                            </div>
+                            <button type="button" id="startQuizBtn" class="shrink-0 rounded-lg bg-ink px-4 py-2 text-xs font-black text-white transition hover:-translate-y-0.5">Take the Quiz</button>
                         </div>
                         <div id="quizBody" class="mt-5 space-y-6"></div>
                     </div>
@@ -166,6 +179,18 @@
                 document.getElementById('subscribeBanner').classList.remove('hidden');
             }
 
+            function renderCourseProgress() {
+                const unlockedModules = data.modules.filter((m) => !m.locked);
+                if (!unlockedModules.length) return;
+                const completedCount = unlockedModules.filter((m) => m.completed).length;
+                const pct = Math.round((completedCount / unlockedModules.length) * 100);
+                document.getElementById('courseProgress').classList.remove('hidden');
+                document.getElementById('courseProgressLabel').textContent = `${completedCount} / ${unlockedModules.length} modules complete`;
+                document.getElementById('courseProgressPct').textContent = `${pct}%`;
+                document.getElementById('courseProgressBar').style.width = `${pct}%`;
+            }
+            renderCourseProgress();
+
             let active = data.modules.find((m) => !m.locked && hasContent(m)) || null;
 
             function renderPlayer() {
@@ -206,7 +231,16 @@
                 }
 
                 document.getElementById('quizBody').innerHTML = '';
-                document.getElementById('startQuizBtn').textContent = 'Take the Quiz';
+                document.getElementById('startQuizBtn').classList.remove('hidden');
+                const lastScoreEl = document.getElementById('quizLastScore');
+                if (active.lastQuizScore != null && active.lastQuizTotal != null) {
+                    document.getElementById('startQuizBtn').textContent = 'Retake the Quiz';
+                    lastScoreEl.textContent = `Last score: ${active.lastQuizScore} / ${active.lastQuizTotal}`;
+                    lastScoreEl.classList.remove('hidden');
+                } else {
+                    document.getElementById('startQuizBtn').textContent = 'Take the Quiz';
+                    lastScoreEl.classList.add('hidden');
+                }
                 if (active.hasQuiz) {
                     quizCard.classList.remove('hidden');
                 } else {
@@ -240,6 +274,7 @@
                 active.completed = nextState;
                 renderPlayer();
                 renderList();
+                renderCourseProgress();
             });
 
             document.getElementById('startQuizBtn').addEventListener('click', async () => {
@@ -258,6 +293,7 @@
                 const mdInline = (text) => (window.marked ? marked.parseInline(text) : text);
 
                 startBtn.classList.add('hidden');
+                document.getElementById('quizLastScore').classList.add('hidden');
                 quizBody.innerHTML = quiz.questions.map((q, qi) => `
                     <div data-question-id="${q.id}">
                         <p class="text-sm font-black">${qi + 1}. ${mdInline(q.prompt)}</p>
@@ -298,6 +334,12 @@
                     resultEl.className = 'text-sm font-bold text-signal';
                     resultEl.classList.remove('hidden');
                     document.getElementById('submitQuizBtn').disabled = true;
+
+                    // Keep the in-memory module data in sync so the score
+                    // sticks if they switch modules and come back without a
+                    // full page reload.
+                    active.lastQuizScore = result.score;
+                    active.lastQuizTotal = result.total;
 
                     result.results.forEach((r) => {
                         const block = quizBody.querySelector(`[data-question-id="${r.questionId}"]`);

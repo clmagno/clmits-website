@@ -3,6 +3,10 @@
 async function apiFetch(path, options) {
     const res = await fetch(`/.netlify/functions/${path}`, {
         credentials: 'same-origin',
+        // Every call here carries session-specific state (role, subscription,
+        // progress, etc.) -- never let the browser serve a stale copy from
+        // its own HTTP cache instead of hitting the network.
+        cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
         ...options
     });

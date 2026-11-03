@@ -73,7 +73,13 @@ exports.handler = async (event) => {
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        // This is per-session state (role, subscription, mustChangePassword,
+        // etc.) -- Netlify's edge cache for Functions varies by query string
+        // only, NOT by cookie (confirmed via the Netlify-Vary: query response
+        // header), so without an explicit no-store a cached response here
+        // could be reused across different logged-in users or simply go
+        // stale after a password/name change until something else busts it.
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store, private' },
         body: JSON.stringify({
             id: sessionUser.id,
             email: sessionUser.email,
